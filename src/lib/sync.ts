@@ -7,8 +7,6 @@ const SLA_DIAS_UTEIS = 15;
 function orderData(order: ShopifyOrder, domain: string) {
   return {
     name: order.name,
-    customerName: order.customer?.displayName ?? null,
-    customerEmail: order.customer?.email ?? null,
     orderDate: new Date(order.createdAt),
     prazoLimite: addBusinessDays(new Date(order.createdAt), SLA_DIAS_UTEIS),
     financialStatus: order.displayFinancialStatus,
@@ -62,8 +60,6 @@ export async function runSync(): Promise<SyncResult> {
         create: {
           shopifyId: li.id,
           orderId: dbOrder.id,
-          productId: li.product?.id ?? null,
-          variantId: li.variant?.id ?? null,
           title: li.title,
           variantTitle: li.variantTitle,
           sku: li.sku,

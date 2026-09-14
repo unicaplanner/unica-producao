@@ -45,8 +45,6 @@ export interface ShopifyLineItem {
   variantTitle: string | null;
   sku: string | null;
   quantity: number;
-  variant: { id: string } | null;
-  product: { id: string } | null;
 }
 
 export interface ShopifyOrder {
@@ -57,7 +55,6 @@ export interface ShopifyOrder {
   displayFulfillmentStatus: string | null;
   cancelledAt: string | null;
   closedAt: string | null;
-  customer: { displayName: string; email: string | null } | null;
   currentTotalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
   lineItems: { edges: { node: ShopifyLineItem }[]; pageInfo: { hasNextPage: boolean } };
 }
@@ -87,10 +84,6 @@ const ORDERS_QUERY = /* GraphQL */ `
           displayFulfillmentStatus
           cancelledAt
           closedAt
-          customer {
-            displayName
-            email
-          }
           currentTotalPriceSet {
             shopMoney {
               amount
@@ -105,12 +98,6 @@ const ORDERS_QUERY = /* GraphQL */ `
                 variantTitle
                 sku
                 quantity
-                variant {
-                  id
-                }
-                product {
-                  id
-                }
               }
             }
             pageInfo {

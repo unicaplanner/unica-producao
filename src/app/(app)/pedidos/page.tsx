@@ -58,12 +58,7 @@ export default async function PedidosPage({
                 className="flex flex-col gap-2 px-4 py-3 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
-                  <p className="font-medium text-gray-900">
-                    {order.name}{" "}
-                    <span className="font-normal text-gray-500">
-                      {order.customerName ?? "cliente sem nome"}
-                    </span>
-                  </p>
+                  <p className="font-medium text-gray-900">{order.name}</p>
                   <p className="text-sm text-gray-500">
                     Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · prazo{" "}
                     {order.prazoLimite.toLocaleDateString("pt-BR")} · {order.lineItems.length} ite

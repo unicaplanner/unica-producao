@@ -9,12 +9,12 @@ datasource db {
 // Um pedido do Shopify. Sincronizado 1x/dia; campos vindos do Shopify sao
 // sempre sobrescritos na sincronizacao, mas o status de producao dos
 // LineItems nunca e mexido pelo sync.
+// Sem nome/email do cliente de proposito: a Shopify so libera PII de
+// cliente via API nos planos Shopify/Advanced/Plus (a loja esta no Basic).
 model Order {
   id          String   @id @default(cuid())
   shopifyId   String   @unique // gid://shopify/Order/123...
   name        String // "#1023"
-  customerName  String?
-  customerEmail String?
   orderDate   DateTime // Shopify createdAt
   prazoLimite DateTime // orderDate + 15 dias uteis, recalculado a cada sync
 
@@ -58,8 +58,6 @@ model LineItem {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  productId    String? // gid://shopify/Product/123... (pode ser nulo em item customizado)
-  variantId    String?
   title        String
   variantTitle String?
   sku          String?
