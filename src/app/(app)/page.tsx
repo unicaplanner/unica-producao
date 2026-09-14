@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getOpenOrders } from "@/lib/queries";
-import { getPriority, PRIORITY_LABEL, PRIORITY_ORDER } from "@/lib/priority";
+import { getPriority, PRIORITY_ORDER } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { StatCard } from "@/components/StatCard";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed p-8 text-center text-gray-500">
+      <div className="rounded-[10px] border border-dashed border-border p-8 text-center text-muted">
         Nenhum pedido em aberto. Clique em &quot;Sincronizar agora&quot; se acabou de configurar
         o app.
       </div>
@@ -30,21 +31,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border bg-white p-4">
-          <p className="text-2xl font-semibold text-gray-900">{orders.length}</p>
-          <p className="text-sm text-gray-500">pedidos abertos</p>
+      <div>
+        <div className="flex flex-col gap-2.5 sm:flex-row">
+          <StatCard label="PEDIDOS ABERTOS" value={orders.length} />
+          <StatCard label="ITENS PENDENTES" value={totalItensPendentes} />
+          <StatCard label="ATRASADO" value={buckets.get("atrasado")!.length} tone="vinho" />
+          <StatCard label="SAI HOJE" value={buckets.get("sai_hoje")!.length} tone="ocre" />
         </div>
-        <div className="rounded-lg border bg-white p-4">
-          <p className="text-2xl font-semibold text-gray-900">{totalItensPendentes}</p>
-          <p className="text-sm text-gray-500">itens pendentes</p>
-        </div>
-        {(["atrasado", "sai_hoje"] as const).map((p) => (
-          <div key={p} className="rounded-lg border bg-white p-4">
-            <p className="text-2xl font-semibold text-gray-900">{buckets.get(p)!.length}</p>
-            <p className="text-sm text-gray-500">{PRIORITY_LABEL[p].toLowerCase()}</p>
-          </div>
-        ))}
+        <p className="mt-2.5 text-[11.5px] text-muted">
+          Prioridade calculada em dias úteis a partir do prazo de 10–15 dias úteis desde o
+          pedido.
+        </p>
       </div>
 
       {PRIORITY_ORDER.map((priority) => {
@@ -52,36 +49,38 @@ export default async function DashboardPage() {
         if (list.length === 0) return null;
         return (
           <section key={priority}>
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900">
+            <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
               <PriorityBadge priority={priority} />
-              <span className="text-gray-500 font-normal">({list.length})</span>
+              <span className="font-normal text-muted">({list.length})</span>
             </h2>
-            <ul className="divide-y rounded-lg border bg-white">
-              {list.map((order) => {
-                const pendentes = order.lineItems.filter(
-                  (li) => li.statusProducao === "pendente"
-                ).length;
-                return (
-                  <li key={order.id}>
-                    <Link
-                      href={`/pedidos/${order.id}`}
-                      className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">{order.name}</p>
-                        <p className="text-sm text-gray-500">
-                          Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · prazo{" "}
-                          {order.prazoLimite.toLocaleDateString("pt-BR")}
-                        </p>
-                      </div>
-                      <span className="whitespace-nowrap text-sm text-gray-600">
-                        {pendentes} pendente{pendentes === 1 ? "" : "s"}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="overflow-hidden rounded-[10px] border border-border">
+              <ul className="divide-y divide-border-soft">
+                {list.map((order) => {
+                  const pendentes = order.lineItems.filter(
+                    (li) => li.statusProducao === "pendente"
+                  ).length;
+                  return (
+                    <li key={order.id}>
+                      <Link
+                        href={`/pedidos/${order.id}`}
+                        className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-header-bg"
+                      >
+                        <div>
+                          <p className="font-semibold text-ink">{order.name}</p>
+                          <p className="text-sm text-muted">
+                            Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · prazo{" "}
+                            {order.prazoLimite.toLocaleDateString("pt-BR")}
+                          </p>
+                        </div>
+                        <span className="whitespace-nowrap text-sm text-muted">
+                          {pendentes} pendente{pendentes === 1 ? "" : "s"}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </section>
         );
       })}

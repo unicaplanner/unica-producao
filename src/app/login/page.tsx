@@ -31,11 +31,11 @@ function LoginForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="w-full max-w-sm space-y-4 rounded-lg border bg-white p-6 shadow-sm"
+      className="w-full max-w-sm space-y-4 rounded-[14px] bg-card p-6 shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
     >
       <div>
-        <h1 className="text-lg font-semibold text-gray-900">Central de Produção</h1>
-        <p className="text-sm text-gray-500">Unica Planner</p>
+        <h1 className="text-lg font-bold text-ink">Central de Produção</h1>
+        <p className="text-sm text-muted">Unica Planner</p>
       </div>
       <input
         type="password"
@@ -43,13 +43,13 @@ function LoginForm() {
         onChange={(e) => setPassword(e.target.value)}
         placeholder="Senha"
         autoFocus
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-ink focus:border-vinho focus:outline-none"
       />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-vinho">{error}</p>}
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+        className="w-full rounded-full bg-vinho px-3 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
       >
         {loading ? "Entrando..." : "Entrar"}
       </button>

@@ -1,16 +1,15 @@
-import { PRIORITY_LABEL, type Priority } from "@/lib/priority";
+import { PRIORITY_LABEL, PRIORITY_TONE, type Priority } from "@/lib/priority";
 
-const STYLES: Record<Priority, string> = {
-  atrasado: "bg-red-100 text-red-800 ring-red-600/20",
-  sai_hoje: "bg-orange-100 text-orange-800 ring-orange-600/20",
-  sai_amanha: "bg-amber-100 text-amber-800 ring-amber-600/20",
-  no_prazo: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
+const TONE_STYLES = {
+  vinho: "bg-vinho-bg text-vinho ring-vinho-border",
+  ocre: "bg-ocre-bg text-ocre ring-ocre-border",
+  oliva: "bg-oliva-bg text-oliva ring-oliva-border",
 };
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${STYLES[priority]}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${TONE_STYLES[PRIORITY_TONE[priority]]}`}
     >
       {PRIORITY_LABEL[priority]}
     </span>

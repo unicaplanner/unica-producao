@@ -29,11 +29,11 @@ export function SyncButton() {
       <button
         onClick={sync}
         disabled={loading}
-        className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+        className="rounded-full bg-vinho px-3.5 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
       >
         {loading ? "Sincronizando..." : "Sincronizar agora"}
       </button>
-      {message && <span className="text-sm text-gray-500">{message}</span>}
+      {message && <span className="text-sm text-muted">{message}</span>}
     </div>
   );
 }

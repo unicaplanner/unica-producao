@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Central de Produção — Unica Planner</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #F7F3EC; color: #2B2620; margin: 0; padding: 32px; }
+  .wrap { max-width: 950px; margin: 0 auto; background: #FCFAF6; border-radius: 14px; padding: 28px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+  h2 { margin: 0 0 4px 0; font-size: 21px; }
+  .sub { margin: 0 0 22px 0; font-size: 13px; color: #766B5C; }
+  .stats { display: flex; gap: 10px; margin-bottom: 10px; }
+  .stat { flex: 1; border-radius: 10px; padding: 12px; border: 1px solid; }
+  .stat .label { font-size: 11px; font-weight: 700; color: inherit; }
+  .stat .num { font-size: 24px; font-weight: 700; }
+  .atrasado { background:#F3E4E6; border-color:#DCB9BE; color:#5C2A34; }
+  .urgente { background:#F4ECD9; border-color:#DCC98F; color:#8C6A2E; }
+  .prazo { background:#E9EEE1; border-color:#C3D0AF; color:#5E6E4C; }
+  .excluidos { background:#EFE9DF; border-color:#DDD4C4; color:#6b6252; }
+  .note { font-size: 11.5px; color: #766B5C; margin: 0 0 20px 0; }
+  .tabs { display:flex; gap:8px; margin-bottom:16px; }
+  .tab { padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; }
+  .tab.active { background:#5C2A34; color:#fff; }
+  .tab.inactive { background:#EFE9DF; color:#5c5346; }
+  table { width:100%; border-collapse: collapse; border:1px solid #E7DFD1; border-radius:10px; overflow:hidden; margin-bottom:20px; }
+  th { background:#F2ECE0; text-align:left; padding:10px 14px; font-size:11px; font-weight:700; color:#766B5C; }
+  td { padding:12px 14px; font-size:13px; border-top:1px solid #EFE9DF; }
+  .badge { padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; white-space: nowrap; }
+  .grouped { background:#F2ECE0; border-radius:10px; padding:14px 16px; }
+  .grouped .title { font-size:12px; font-weight:700; color:#766B5C; margin-bottom:4px; }
+  .grouped .subtitle { font-size: 11px; color: #766B5C; margin-bottom: 10px; }
+  .grow { display:flex; justify-content:space-between; padding:6px 0; font-size:13px; border-bottom:1px solid #E7DFD1; }
+  .grow:last-child { border-bottom:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Central de Produção — Unica Planner</h2>
+  <p class="sub">Puxado do Shopify agora · rotinaunica.com.br</p>
+
+  <div class="stats">
+    <div class="stat atrasado"><div class="label">Atrasado</div><div class="num">3</div></div>
+    <div class="stat urgente"><div class="label">Perto do limite</div><div class="num">8</div></div>
+    <div class="stat prazo"><div class="label">No prazo</div><div class="num">18</div></div>
+    <div class="stat excluidos"><div class="label">Excluídos (status financeiro)</div><div class="num">8</div></div>
+  </div>
+  <p class="note">Prioridade estimada por dias corridos desde a data do pedido, comparado ao prazo de 10–15 dias úteis. Excluídos = pedidos expirados, cancelados, reembolsados ou pendentes de pagamento — não entram na fila de produção.</p>
+
+  <div class="tabs">
+    <div class="tab active">Por pedido</div>
+    <div class="tab inactive">Agrupado por item</div>
+  </div>
+
+  <table>
+    <tr><th>Pedido</th><th>Cliente / Itens</th><th>Dias</th><th>Status</th><th></th></tr>
+    <tr><td><b>#1399</b></td><td>Shirley Oda — Case Argolada Clássica A5 (Bege Cappucino)</td><td style="color:#5C2A34;font-weight:600;">203d</td><td><span class="badge" style="background:#F3E4E6;color:#5C2A34;">Atrasado</span></td><td><input type="checkbox"></td></tr>
+    <tr><td><b>#1539</b></td><td>Andréia Caldas — Unica Box (A5 Disc)</td><td style="color:#5C2A34;font-weight:600;">45d</td><td><span class="badge" style="background:#F3E4E6;color:#5C2A34;">Atrasado</span></td><td><input type="checkbox"></td></tr>
+    <tr><td><b>#1554</b></td><td>Bruna de Souza Dias — Case Argolada Clássica A5 (Marrom Escuro)</td><td style="color:#5C2A34;font-weight:600;">22d</td><td><span class="badge" style="background:#F3E4E6;color:#5C2A34;">Atrasado</span></td><td><input type="checkbox"></td></tr>
+    <tr><td><b>#1555</b></td><td>Claudiane Rodrigues — Moodboard, Abas Divisórias (x3), Lista 12 meses</td><td style="color:#8C6A2E;font-weight:600;">19d</td><td><span class="badge" style="background:#F4ECD9;color:#8C6A2E;">Perto do limite</span></td><td><input type="checkbox"></td></tr>
+    <tr><td><b>#1584</b></td><td>Ágapy Ester Alves Ribeiro Cunha — 13 itens</td><td style="color:#5E6E4C;font-weight:600;">1d</td><td><span class="badge" style="background:#E9EEE1;color:#5E6E4C;">No prazo</span></td><td><input type="checkbox"></td></tr>
+    <tr><td><b>#1583</b></td><td>Anna Caroline Carvalho — 4 itens</td><td style="color:#5E6E4C;font-weight:600;">2d</td><td><span class="badge" style="background:#E9EEE1;color:#5E6E4C;">No prazo</span></td><td><input type="checkbox"></td></tr>
+    <tr><td><b>#1582</b></td><td>Thayane — 4 itens</td><td style="color:#5E6E4C;font-weight:600;">3d</td><td><span class="badge" style="background:#E9EEE1;color:#5E6E4C;">No prazo</span></td><td><input type="checkbox"></td></tr>
+  </table>
+
+  <div class="grouped">
+    <div class="title">Visão agrupada — produzir em lote</div>
+    <div class="subtitle">Amostra com dados reais dos 4 pedidos mais críticos acima (#1399, #1539, #1554, #1555).</div>
+    <div class="grow"><span>Case Argolada Clássica A5</span><span><b>2 pendentes · 2 pedidos</b></span></div>
+    <div class="grow"><span>Aba Divisória Personalizada</span><span><b>3 pendentes · 1 pedido</b></span></div>
+    <div class="grow"><span>MOODBOARD | Personalizado</span><span><b>2 pendentes · 1 pedido</b></span></div>
+    <div class="grow"><span>Unica Box (A5 Disc)</span><span><b>1 pendente · 1 pedido</b></span></div>
+    <div class="grow"><span>12 meses em Lista</span><span><b>1 pendente · 1 pedido</b></span></div>
+  </div>
+</div>
+</body>
+</html>

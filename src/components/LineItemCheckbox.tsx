@@ -30,15 +30,15 @@ export function LineItemCheckbox({
   }
 
   return (
-    <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+    <label className="inline-flex items-center gap-2 cursor-pointer select-none text-sm">
       <input
         type="checkbox"
         checked={checked}
         onChange={toggle}
         disabled={isPending}
-        className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+        className="h-4 w-4 rounded border-border text-oliva focus:ring-oliva"
       />
-      <span className={checked ? "line-through text-gray-400" : ""}>
+      <span className={checked ? "text-oliva line-through" : "text-muted"}>
         {checked ? "Produzido" : "Marcar como produzido"}
       </span>
     </label>

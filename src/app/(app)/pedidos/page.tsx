@@ -1,9 +1,23 @@
 import Link from "next/link";
 import { getOpenOrders } from "@/lib/queries";
-import { getPriority, PRIORITY_LABEL, PRIORITY_ORDER, type Priority } from "@/lib/priority";
+import {
+  formatDiasRestantes,
+  getDiasRestantes,
+  getPriority,
+  PRIORITY_LABEL,
+  PRIORITY_ORDER,
+  PRIORITY_TONE,
+  type Priority,
+} from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 
 export const dynamic = "force-dynamic";
+
+const DIAS_TONE_TEXT = {
+  vinho: "text-vinho",
+  ocre: "text-ocre",
+  oliva: "text-oliva",
+};
 
 export default async function PedidosPage({
   searchParams,
@@ -23,8 +37,8 @@ export default async function PedidosPage({
       <div className="flex flex-wrap items-center gap-2">
         <Link
           href="/pedidos"
-          className={`rounded-full px-3 py-1 text-sm ${
-            !filtro ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+            !filtro ? "bg-vinho text-white" : "bg-border-soft text-ink/70 hover:bg-border"
           }`}
         >
           Todos ({orders.length})
@@ -35,8 +49,8 @@ export default async function PedidosPage({
             <Link
               key={p}
               href={`/pedidos?prioridade=${p}`}
-              className={`rounded-full px-3 py-1 text-sm ${
-                filtro === p ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+                filtro === p ? "bg-vinho text-white" : "bg-border-soft text-ink/70 hover:bg-border"
               }`}
             >
               {PRIORITY_LABEL[p]} ({count})
@@ -45,33 +59,50 @@ export default async function PedidosPage({
         })}
       </div>
 
-      <ul className="divide-y rounded-lg border bg-white">
-        {filtrados.length === 0 && (
-          <li className="px-4 py-6 text-center text-sm text-gray-500">Nenhum pedido encontrado.</li>
-        )}
-        {filtrados.map(({ order, priority }) => {
-          const pendentes = order.lineItems.filter((li) => li.statusProducao === "pendente").length;
-          return (
-            <li key={order.id}>
-              <Link
-                href={`/pedidos/${order.id}`}
-                className="flex flex-col gap-2 px-4 py-3 hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">{order.name}</p>
-                  <p className="text-sm text-gray-500">
-                    Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · prazo{" "}
-                    {order.prazoLimite.toLocaleDateString("pt-BR")} · {order.lineItems.length} ite
-                    {order.lineItems.length === 1 ? "m" : "ns"} ({pendentes} pendente
-                    {pendentes === 1 ? "" : "s"})
-                  </p>
-                </div>
-                <PriorityBadge priority={priority} />
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="overflow-x-auto rounded-[10px] border border-border">
+        <table className="w-full min-w-[560px] border-collapse text-sm">
+          <thead>
+            <tr className="bg-header-bg">
+              <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Pedido</th>
+              <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Itens</th>
+              <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Prazo</th>
+              <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrados.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-3.5 py-6 text-center text-muted">
+                  Nenhum pedido encontrado.
+                </td>
+              </tr>
+            )}
+            {filtrados.map(({ order, priority }) => {
+              const pendentes = order.lineItems.filter((li) => li.statusProducao === "pendente").length;
+              const dias = getDiasRestantes(order.prazoLimite, now);
+              return (
+                <tr key={order.id} className="border-t border-border-soft hover:bg-header-bg">
+                  <td className="px-3.5 py-3">
+                    <Link href={`/pedidos/${order.id}`} className="font-semibold text-ink hover:underline">
+                      {order.name}
+                    </Link>
+                  </td>
+                  <td className="px-3.5 py-3 text-muted">
+                    {order.lineItems.length} item{order.lineItems.length === 1 ? "" : "s"} (
+                    {pendentes} pendente{pendentes === 1 ? "" : "s"})
+                  </td>
+                  <td className={`px-3.5 py-3 font-semibold ${DIAS_TONE_TEXT[PRIORITY_TONE[priority]]}`}>
+                    {formatDiasRestantes(dias)}
+                  </td>
+                  <td className="px-3.5 py-3">
+                    <PriorityBadge priority={priority} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
