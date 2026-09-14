@@ -5,7 +5,7 @@ import { SESSION_COOKIE, isValidSessionToken } from "@/lib/auth";
 // cron (que tem sua propria autenticacao via CRON_SECRET, checada na rota).
 const PUBLIC_PATHS = ["/login", "/api/login", "/api/cron"];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p)) || pathname.startsWith("/_next")) {
