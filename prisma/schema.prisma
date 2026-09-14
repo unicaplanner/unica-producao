@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Um pedido do Shopify. Sincronizado 1x/dia; campos vindos do Shopify sao
+// sempre sobrescritos na sincronizacao, mas o status de producao dos
+// LineItems nunca e mexido pelo sync.
+model Order {
+  id          String   @id @default(cuid())
+  shopifyId   String   @unique // gid://shopify/Order/123...
+  name        String // "#1023"
+  customerName  String?
+  customerEmail String?
+  orderDate   DateTime // Shopify createdAt
+  prazoLimite DateTime // orderDate + 15 dias uteis, recalculado a cada sync
+
+  financialStatus   String? // paid, pending, partially_paid...
+  fulfillmentStatus String? // unfulfilled, partial, fulfilled...
+  cancelledAt       DateTime?
+  closedAt          DateTime?
+
+  // false quando o pedido nao veio mais na ultima sincronizacao com
+  // query "status:open" -- ou seja, foi cumprido ou cancelado no Shopify.
+  // E o jeito de saber que um pedido saiu do estado "aberto" sem ter que
+  // reconsultar cada um individualmente.
+  stillOpenInShopify Boolean @default(true)
+
+  totalPrice String // Decimal do Shopify vem como string
+  currency   String
+
+  adminUrl String // link direto pro pedido no admin do Shopify
+
+  lastSyncedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lineItems LineItem[]
+
+  @@index([fulfillmentStatus])
+  @@index([prazoLimite])
+}
+
+enum StatusProducao {
+  pendente
+  produzido
+}
+
+// Um item de linha de um pedido. E aqui que mora o rastreio de producao,
+// o unico dado que o Shopify nao sabe e que precisa persistir entre syncs.
+model LineItem {
+  id        String @id @default(cuid())
+  shopifyId String @unique // gid://shopify/LineItem/123...
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId    String? // gid://shopify/Product/123... (pode ser nulo em item customizado)
+  variantId    String?
+  title        String
+  variantTitle String?
+  sku          String?
+  quantity     Int
+
+  statusProducao StatusProducao @default(pendente)
+  dataProducao   DateTime?
+
+  lastSyncedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([statusProducao])
+  @@index([title])
+}
