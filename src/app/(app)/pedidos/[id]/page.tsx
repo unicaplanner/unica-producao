@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { formatCustomAttributes, getOrderById, type CustomAttribute } from "@/lib/queries";
+import { getOrderById } from "@/lib/queries";
+import { formatCustomAttributes, type CustomAttribute } from "@/lib/productGroups";
 import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
