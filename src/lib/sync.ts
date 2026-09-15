@@ -20,6 +20,7 @@ function orderData(order: ShopifyOrder, domain: string) {
     closedAt: order.closedAt ? new Date(order.closedAt) : null,
     totalPrice: order.currentTotalPriceSet.shopMoney.amount,
     currency: order.currentTotalPriceSet.shopMoney.currencyCode,
+    shippingMethod: order.shippingLine?.title ?? null,
     adminUrl: adminOrderUrl(domain, order.id),
     stillOpenInShopify: true,
     lastSyncedAt: new Date(),

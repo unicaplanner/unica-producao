@@ -32,6 +32,8 @@ model Order {
   totalPrice String // Decimal do Shopify vem como string
   currency   String
 
+  shippingMethod String? // nome do frete escolhido no checkout (ex: "PAC", "Sedex")
+
   adminUrl String // link direto pro pedido no admin do Shopify
 
   lastSyncedAt DateTime @default(now())
@@ -40,8 +42,33 @@ model Order {
 
   lineItems LineItem[]
 
+  // Caixa fisica de envio. Varios pedidos podem compartilhar a mesma caixa
+  // (cliente que comprou em pedidos separados e a gente agrupa pra mandar
+  // junto). Nulo = pedido ainda nao entrou em nenhuma caixa.
+  boxId String?
+  box   Box?    @relation(fields: [boxId], references: [id])
+
   @@index([fulfillmentStatus])
   @@index([prazoLimite])
+}
+
+// O checklist de embalagem/envio vive na caixa, nao no pedido -- pedidos
+// agrupados na mesma caixa compartilham o mesmo status (uma caixa so pode
+// ser despachada uma vez, por exemplo).
+model Box {
+  id     String @id @default(cuid())
+  numero Int    @default(autoincrement()) // exibido como "Caixa 1", "Caixa 2"...
+
+  montada          Boolean @default(false)
+  finalizada       Boolean @default(false)
+  notaFiscalGerada Boolean @default(false)
+  etiquetaGerada   Boolean @default(false)
+  despachado       Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
 }
 
 enum StatusProducao {

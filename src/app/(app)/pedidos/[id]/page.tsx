@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOrderById } from "@/lib/queries";
+import { getOrderById, getUnboxedOpenOrders } from "@/lib/queries";
 import { formatCustomAttributes, type CustomAttribute } from "@/lib/productGroups";
 import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
+import { BoxChecklist } from "@/components/BoxChecklist";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   if (!order) notFound();
 
   const priority = getPriority(order.prazoLimite);
+  const unboxed = await getUnboxedOpenOrders();
+  const candidatos = unboxed.filter((o) => o.id !== order.id);
 
   return (
     <div className="space-y-6">
@@ -50,6 +53,10 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
                 currency: order.currency,
               })}
             </dd>
+          </div>
+          <div>
+            <dt className="text-muted">Frete</dt>
+            <dd className="text-ink">{order.shippingMethod ?? "—"}</dd>
           </div>
         </dl>
 
@@ -94,6 +101,15 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
             );
           })}
         </ul>
+      </div>
+
+      <div className="overflow-hidden rounded-[10px] border border-border">
+        <h2 className="border-b border-border-soft bg-header-bg px-4 py-3 text-[11px] font-bold text-muted">
+          Embalagem
+        </h2>
+        <div className="p-4">
+          <BoxChecklist orderId={order.id} box={order.box} candidatos={candidatos} />
+        </div>
       </div>
     </div>
   );

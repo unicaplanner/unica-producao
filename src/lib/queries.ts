@@ -12,7 +12,20 @@ export async function getOpenOrders() {
 export async function getOrderById(id: string) {
   return prisma.order.findUnique({
     where: { id },
-    include: { lineItems: { orderBy: { title: "asc" } } },
+    include: {
+      lineItems: { orderBy: { title: "asc" } },
+      box: { include: { orders: { orderBy: { name: "asc" } } } },
+    },
+  });
+}
+
+// Lista enxuta de pedidos abertos que ainda nao entraram em nenhuma caixa
+// -- e o "candidatos pra agrupar" do seletor de caixa.
+export async function getUnboxedOpenOrders() {
+  return prisma.order.findMany({
+    where: { stillOpenInShopify: true, boxId: null },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
   });
 }
 

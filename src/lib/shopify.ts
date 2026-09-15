@@ -56,6 +56,7 @@ export interface ShopifyOrder {
   displayFulfillmentStatus: string | null;
   cancelledAt: string | null;
   closedAt: string | null;
+  shippingLine: { title: string } | null;
   currentTotalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
   lineItems: { edges: { node: ShopifyLineItem }[]; pageInfo: { hasNextPage: boolean } };
 }
@@ -85,6 +86,9 @@ const ORDERS_QUERY = /* GraphQL */ `
           displayFulfillmentStatus
           cancelledAt
           closedAt
+          shippingLine {
+            title
+          }
           currentTotalPriceSet {
             shopMoney {
               amount
