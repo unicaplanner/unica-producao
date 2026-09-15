@@ -15,6 +15,11 @@ export async function getOrderById(id: string) {
   });
 }
 
+export interface CustomAttribute {
+  key: string;
+  value: string;
+}
+
 export interface ProductGroup {
   key: string;
   title: string;
@@ -26,7 +31,15 @@ export interface ProductGroup {
     orderName: string;
     prazoLimite: Date;
     quantity: number;
+    customAttributes: CustomAttribute[];
   }[];
+}
+
+// Formata os atributos de personalizacao pra exibicao curta, ex:
+// "text-1: Fé" ou "Cor: Azul, Nome: Ana" quando tem mais de um.
+export function formatCustomAttributes(attrs: CustomAttribute[]): string | null {
+  if (attrs.length === 0) return null;
+  return attrs.map((a) => `${a.key}: ${a.value}`).join(", ");
 }
 
 // Agrupa os itens de linha ainda pendentes (de pedidos abertos) por
@@ -62,6 +75,7 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
       orderName: item.order.name,
       prazoLimite: item.order.prazoLimite,
       quantity: item.quantity,
+      customAttributes: (item.customAttributes as CustomAttribute[] | null) ?? [],
     });
   }
 

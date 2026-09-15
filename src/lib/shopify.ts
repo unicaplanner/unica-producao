@@ -45,6 +45,7 @@ export interface ShopifyLineItem {
   variantTitle: string | null;
   sku: string | null;
   quantity: number;
+  customAttributes: { key: string; value: string }[];
 }
 
 export interface ShopifyOrder {
@@ -98,6 +99,10 @@ const ORDERS_QUERY = /* GraphQL */ `
                 variantTitle
                 sku
                 quantity
+                customAttributes {
+                  key
+                  value
+                }
               }
             }
             pageInfo {
@@ -133,6 +138,15 @@ export async function fetchOpenOrders(): Promise<ShopifyOrder[]> {
   }
 
   return orders;
+}
+
+// Apps de personalizacao gravam o texto do cliente em customAttributes,
+// mas junto vem lixo tecnico do proprio app (chaves comecando com "_", tipo
+// "_has_gpo" ou "_sealsubscription_id") que nao interessa pra producao.
+export function personalizationAttributes(
+  li: ShopifyLineItem
+): { key: string; value: string }[] {
+  return li.customAttributes.filter((attr) => !attr.key.startsWith("_"));
 }
 
 export function adminOrderUrl(domain: string, shopifyOrderGid: string): string {

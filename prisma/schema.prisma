@@ -63,6 +63,11 @@ model LineItem {
   sku          String?
   quantity     Int
 
+  // Texto de personalizacao gravado por apps do produto (ex: "text-1: Fé"),
+  // vindo de LineItem.customAttributes no Shopify. Array de {key, value},
+  // ja filtrado das chaves internas de apps (que comecam com "_").
+  customAttributes Json?
+
   statusProducao StatusProducao @default(pendente)
   dataProducao   DateTime?
 

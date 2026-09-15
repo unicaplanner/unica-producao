@@ -1,5 +1,10 @@
 import { prisma } from "./prisma";
-import { fetchOpenOrders, adminOrderUrl, type ShopifyOrder } from "./shopify";
+import {
+  fetchOpenOrders,
+  adminOrderUrl,
+  personalizationAttributes,
+  type ShopifyOrder,
+} from "./shopify";
 import { addBusinessDays } from "./businessDays";
 
 const SLA_DIAS_UTEIS = 15;
@@ -55,6 +60,7 @@ export async function runSync(): Promise<SyncResult> {
 
     for (const edge of order.lineItems.edges) {
       const li = edge.node;
+      const customAttributes = personalizationAttributes(li);
       await prisma.lineItem.upsert({
         where: { shopifyId: li.id },
         create: {
@@ -64,6 +70,7 @@ export async function runSync(): Promise<SyncResult> {
           variantTitle: li.variantTitle,
           sku: li.sku,
           quantity: li.quantity,
+          customAttributes,
           lastSyncedAt: new Date(),
         },
         update: {
@@ -72,6 +79,7 @@ export async function runSync(): Promise<SyncResult> {
           variantTitle: li.variantTitle,
           sku: li.sku,
           quantity: li.quantity,
+          customAttributes,
           lastSyncedAt: new Date(),
         },
       });

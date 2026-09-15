@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getPendingGroupedByProduct } from "@/lib/queries";
+import { formatCustomAttributes, getPendingGroupedByProduct } from "@/lib/queries";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
 
 export const dynamic = "force-dynamic";
@@ -38,17 +38,25 @@ export default async function ProdutosPage() {
               </span>
             </summary>
             <ul className="border-t border-border">
-              {grupo.pedidos.map((p) => (
-                <li
-                  key={p.lineItemId}
-                  className="flex items-center justify-between gap-4 border-b border-border px-4 py-2.5 text-sm last:border-b-0"
-                >
-                  <Link href={`/pedidos/${p.orderId}`} className="text-ink hover:underline">
-                    {p.orderName} · {p.quantity}× · prazo {p.prazoLimite.toLocaleDateString("pt-BR")}
-                  </Link>
-                  <LineItemCheckbox lineItemId={p.lineItemId} produzido={false} />
-                </li>
-              ))}
+              {grupo.pedidos.map((p) => {
+                const texto = formatCustomAttributes(p.customAttributes);
+                return (
+                  <li
+                    key={p.lineItemId}
+                    className="flex items-center justify-between gap-4 border-b border-border px-4 py-2.5 text-sm last:border-b-0"
+                  >
+                    <Link href={`/pedidos/${p.orderId}`} className="text-ink hover:underline">
+                      {p.orderName} · {p.quantity}× · prazo {p.prazoLimite.toLocaleDateString("pt-BR")}
+                      {texto && (
+                        <span className="ml-2 rounded-full bg-ocre-bg px-2 py-0.5 text-xs font-semibold text-ocre">
+                          {texto}
+                        </span>
+                      )}
+                    </Link>
+                    <LineItemCheckbox lineItemId={p.lineItemId} produzido={false} />
+                  </li>
+                );
+              })}
             </ul>
           </details>
         ))}

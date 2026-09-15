@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOrderById } from "@/lib/queries";
+import { formatCustomAttributes, getOrderById, type CustomAttribute } from "@/lib/queries";
 import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
@@ -67,21 +67,31 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           Itens do pedido
         </h2>
         <ul className="divide-y divide-border-soft">
-          {order.lineItems.map((item) => (
-            <li key={item.id} className="flex items-center justify-between gap-4 px-4 py-3">
-              <div>
-                <p className="font-semibold text-ink">
-                  {item.quantity}× {item.title}
-                </p>
-                {item.variantTitle && <p className="text-sm text-muted">{item.variantTitle}</p>}
-                {item.sku && <p className="text-xs text-muted/70">SKU {item.sku}</p>}
-              </div>
-              <LineItemCheckbox
-                lineItemId={item.id}
-                produzido={item.statusProducao === "produzido"}
-              />
-            </li>
-          ))}
+          {order.lineItems.map((item) => {
+            const texto = formatCustomAttributes(
+              (item.customAttributes as CustomAttribute[] | null) ?? []
+            );
+            return (
+              <li key={item.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                <div>
+                  <p className="font-semibold text-ink">
+                    {item.quantity}× {item.title}
+                  </p>
+                  {item.variantTitle && <p className="text-sm text-muted">{item.variantTitle}</p>}
+                  {item.sku && <p className="text-xs text-muted/70">SKU {item.sku}</p>}
+                  {texto && (
+                    <p className="mt-1 inline-block rounded-full bg-ocre-bg px-2 py-0.5 text-xs font-semibold text-ocre">
+                      {texto}
+                    </p>
+                  )}
+                </div>
+                <LineItemCheckbox
+                  lineItemId={item.id}
+                  produzido={item.statusProducao === "produzido"}
+                />
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>
