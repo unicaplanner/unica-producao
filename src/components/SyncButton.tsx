@@ -15,7 +15,13 @@ export function SyncButton() {
       const res = await fetch("/api/sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Falha na sincronizacao.");
-      setMessage(`${data.ordersSynced} pedidos sincronizados.`);
+      const partes = [`${data.ordersSynced} pedidos sincronizados.`];
+      if (data.variantsError) {
+        partes.push(`Estoque não sincronizou: ${data.variantsError}`);
+      } else {
+        partes.push(`${data.variantsSynced} variantes de estoque atualizadas.`);
+      }
+      setMessage(partes.join(" "));
       router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Erro desconhecido.");

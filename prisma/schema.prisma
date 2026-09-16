@@ -105,3 +105,50 @@ model LineItem {
   @@index([statusProducao])
   @@index([title])
 }
+
+// Foto da variante de produto vinda do Shopify (produto pra venda avulsa em
+// estoque, nao ligado a pedido nenhum). Sincronizado 1x/dia junto com os
+// pedidos -- e o que alimenta o alerta de estoque baixo.
+model Variant {
+  id               String  @id @default(cuid())
+  shopifyVariantId String  @unique // gid://shopify/ProductVariant/123...
+  inventoryItemId  String // gid://shopify/InventoryItem/123... -- precisa pra ajustar estoque
+  productTitle     String
+  variantTitle     String?
+  sku              String?
+  inventoryQuantity Int
+
+  lastSyncedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stockQueueItems StockQueueItem[]
+
+  @@index([inventoryQuantity])
+}
+
+// Fila de producao pra repor estoque (diferente da producao por pedido):
+// as vezes o site mostra 10 unidades de um produto mas nem todas as 10
+// foram fisicamente produzidas ainda. Esse registro rastreia quanto falta
+// produzir de um lote, e so depois de concluido pergunta se quer somar
+// isso ao estoque real do Shopify -- nunca atualiza sozinho.
+model StockQueueItem {
+  id String @id @default(cuid())
+
+  variantId String?
+  variant   Variant? @relation(fields: [variantId], references: [id])
+
+  productTitle String
+  variantTitle String?
+  sku          String?
+
+  targetQuantity   Int
+  producedQuantity Int     @default(0)
+  concluido        Boolean @default(false)
+
+  sincronizadoComShopify Boolean   @default(false)
+  sincronizadoEm         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

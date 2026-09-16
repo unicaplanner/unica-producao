@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import {
   fetchOpenOrders,
+  fetchAllVariants,
   adminOrderUrl,
   personalizationAttributes,
   type ShopifyOrder,
@@ -31,6 +32,8 @@ export interface SyncResult {
   ordersSynced: number;
   lineItemsSynced: number;
   ordersClosed: number;
+  variantsSynced: number;
+  variantsError: string | null;
 }
 
 // Busca pedidos em aberto no Shopify e faz merge com o banco local:
@@ -96,5 +99,53 @@ export async function runSync(): Promise<SyncResult> {
     data: { stillOpenInShopify: false, lastSyncedAt: new Date() },
   });
 
-  return { ordersSynced: openOrders.length, lineItemsSynced, ordersClosed };
+  // Sincronizar estoque e independente de pedidos -- se o token ainda nao
+  // tem escopo read_products, isso nao pode derrubar o sync de pedidos que
+  // ja funcionou.
+  let variantsSynced = 0;
+  let variantsError: string | null = null;
+  try {
+    variantsSynced = await syncVariants();
+  } catch (err) {
+    variantsError = err instanceof Error ? err.message : "Erro desconhecido ao sincronizar estoque.";
+  }
+
+  return {
+    ordersSynced: openOrders.length,
+    lineItemsSynced,
+    ordersClosed,
+    variantsSynced,
+    variantsError,
+  };
+}
+
+// Atualiza a foto de estoque de todas as variantes -- so a quantidade em
+// si; nao mexe em nada da fila de producao de estoque (StockQueueItem).
+async function syncVariants(): Promise<number> {
+  const variants = await fetchAllVariants();
+
+  for (const v of variants) {
+    await prisma.variant.upsert({
+      where: { shopifyVariantId: v.id },
+      create: {
+        shopifyVariantId: v.id,
+        inventoryItemId: v.inventoryItem.id,
+        productTitle: v.productTitle,
+        variantTitle: v.title === "Default Title" ? null : v.title,
+        sku: v.sku,
+        inventoryQuantity: v.inventoryQuantity ?? 0,
+        lastSyncedAt: new Date(),
+      },
+      update: {
+        inventoryItemId: v.inventoryItem.id,
+        productTitle: v.productTitle,
+        variantTitle: v.title === "Default Title" ? null : v.title,
+        sku: v.sku,
+        inventoryQuantity: v.inventoryQuantity ?? 0,
+        lastSyncedAt: new Date(),
+      },
+    });
+  }
+
+  return variants.length;
 }
