@@ -3,28 +3,44 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+// Shopify devolve o erro cru de GraphQL (um JSON gigante) -- isso nunca deve
+// aparecer na tela pra usuaria. Traduz os casos conhecidos e corta o resto.
+function friendlyVariantsError(raw: string): string {
+  if (raw.includes("ACCESS_DENIED") || raw.toLowerCase().includes("access denied")) {
+    return "faltam permissões no app do Shopify (veja as instruções de escopo).";
+  }
+  const short = raw.length > 100 ? `${raw.slice(0, 100)}…` : raw;
+  return short;
+}
+
 export function SyncButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
 
   async function sync() {
     setLoading(true);
     setMessage(null);
+    setIsError(false);
     try {
       const res = await fetch("/api/sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Falha na sincronizacao.");
-      const partes = [`${data.ordersSynced} pedidos sincronizados.`];
       if (data.variantsError) {
-        partes.push(`Estoque não sincronizou: ${data.variantsError}`);
+        setMessage(
+          `${data.ordersSynced} pedidos sincronizados. Estoque não sincronizou: ${friendlyVariantsError(data.variantsError)}`
+        );
+        setIsError(true);
       } else {
-        partes.push(`${data.variantsSynced} variantes de estoque atualizadas.`);
+        setMessage(
+          `${data.ordersSynced} pedidos e ${data.variantsSynced} itens de estoque sincronizados.`
+        );
       }
-      setMessage(partes.join(" "));
       router.refresh();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Erro desconhecido.");
+      setIsError(true);
     } finally {
       setLoading(false);
     }
@@ -39,7 +55,11 @@ export function SyncButton() {
       >
         {loading ? "Sincronizando..." : "Sincronizar agora"}
       </button>
-      {message && <span className="text-sm text-muted">{message}</span>}
+      {message && (
+        <span className={`max-w-xs text-xs ${isError ? "text-ocre" : "text-muted"}`}>
+          {message}
+        </span>
+      )}
     </div>
   );
 }
