@@ -144,48 +144,28 @@ export async function fetchOpenOrders(): Promise<ShopifyOrder[]> {
   return orders;
 }
 
-export interface ShopifyVariant {
+export interface ShopifyProductSummary {
   id: string;
   title: string;
-  sku: string | null;
-  inventoryQuantity: number | null;
-  inventoryItem: { id: string };
-  productTitle: string;
+  onlineStoreUrl: string | null;
 }
 
 interface ProductsResponse {
   products: {
-    edges: {
-      cursor: string;
-      node: {
-        title: string;
-        variants: { edges: { node: Omit<ShopifyVariant, "productTitle"> }[] };
-      };
-    }[];
+    edges: { cursor: string; node: ShopifyProductSummary }[];
     pageInfo: { hasNextPage: boolean };
   };
 }
 
 const PRODUCTS_QUERY = /* GraphQL */ `
-  query AllProductVariants($cursor: String) {
-    products(first: 50, after: $cursor) {
+  query AllProducts($cursor: String) {
+    products(first: 100, after: $cursor) {
       edges {
         cursor
         node {
+          id
           title
-          variants(first: 100) {
-            edges {
-              node {
-                id
-                title
-                sku
-                inventoryQuantity
-                inventoryItem {
-                  id
-                }
-              }
-            }
-          }
+          onlineStoreUrl
         }
       }
       pageInfo {
@@ -195,11 +175,11 @@ const PRODUCTS_QUERY = /* GraphQL */ `
   }
 `;
 
-// Busca todas as variantes de produto da loja com a quantidade em estoque
-// -- e o que alimenta o alerta de estoque baixo. Mesmo limite de seguranca
-// de paginacao que fetchOpenOrders.
-export async function fetchAllVariants(): Promise<ShopifyVariant[]> {
-  const variants: ShopifyVariant[] = [];
+// Busca titulo + link no site de todos os produtos -- alimenta o "Link do
+// site" automatico na tela Agrupado por item. Mesmo limite de seguranca de
+// paginacao que fetchOpenOrders.
+export async function fetchAllProducts(): Promise<ShopifyProductSummary[]> {
+  const products: ShopifyProductSummary[] = [];
   let cursor: string | undefined;
   let hasNextPage = true;
   let safety = 0;
@@ -208,69 +188,13 @@ export async function fetchAllVariants(): Promise<ShopifyVariant[]> {
     safety += 1;
     const data = await shopifyGraphQL<ProductsResponse>(PRODUCTS_QUERY, { cursor });
     for (const edge of data.products.edges) {
-      for (const variantEdge of edge.node.variants.edges) {
-        variants.push({ ...variantEdge.node, productTitle: edge.node.title });
-      }
+      products.push(edge.node);
       cursor = edge.cursor;
     }
     hasNextPage = data.products.pageInfo.hasNextPage;
   }
 
-  return variants;
-}
-
-interface LocationsResponse {
-  locations: { edges: { node: { id: string } }[] };
-}
-
-// Loja tem um unico local de estoque; busca o id sempre fresco (evita
-// guardar id errado se um dia isso mudar).
-export async function fetchPrimaryLocationId(): Promise<string> {
-  const data = await shopifyGraphQL<LocationsResponse>(
-    `query { locations(first: 1) { edges { node { id } } } }`
-  );
-  const location = data.locations.edges[0]?.node;
-  if (!location) throw new Error("Nenhum local de estoque encontrado na loja.");
-  return location.id;
-}
-
-interface AdjustQuantitiesResponse {
-  inventoryAdjustQuantities: {
-    userErrors: { field: string[] | null; message: string }[];
-  };
-}
-
-// Soma `delta` unidades ao estoque disponivel de uma variante -- usado so
-// depois que a usuaria confirma explicitamente que terminou de produzir um
-// lote. Nunca roda sozinho.
-export async function adjustInventoryQuantity(
-  inventoryItemId: string,
-  delta: number
-): Promise<void> {
-  const locationId = await fetchPrimaryLocationId();
-  const data = await shopifyGraphQL<AdjustQuantitiesResponse>(
-    `mutation AdjustStock($input: InventoryAdjustQuantitiesInput!) {
-      inventoryAdjustQuantities(input: $input) {
-        userErrors {
-          field
-          message
-        }
-      }
-    }`,
-    {
-      input: {
-        reason: "restock",
-        name: "available",
-        referenceDocumentUri: "gid://unica-producao/StockQueueItem/manual",
-        changes: [{ inventoryItemId, locationId, delta }],
-      },
-    }
-  );
-
-  const errors = data.inventoryAdjustQuantities.userErrors;
-  if (errors.length > 0) {
-    throw new Error(`Shopify recusou o ajuste de estoque: ${JSON.stringify(errors)}`);
-  }
+  return products;
 }
 
 // Apps de personalizacao gravam o texto do cliente em customAttributes,

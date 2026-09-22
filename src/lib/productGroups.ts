@@ -23,6 +23,13 @@ export interface ProductGroup {
   }[];
 }
 
+// Informacoes cadastradas a mao pra um grupo (produto+variante).
+export interface ProductInfoData {
+  printUrl: string | null;
+  siteUrl: string | null;
+  specs: string | null;
+}
+
 // Formata os atributos de personalizacao pra exibicao curta, ex:
 // "text-1: Fé" ou "Cor: Azul, Nome: Ana" quando tem mais de um.
 export function formatCustomAttributes(attrs: CustomAttribute[]): string | null {

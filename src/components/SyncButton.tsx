@@ -5,7 +5,7 @@ import { useState } from "react";
 
 // Shopify devolve o erro cru de GraphQL (um JSON gigante) -- isso nunca deve
 // aparecer na tela pra usuaria. Traduz os casos conhecidos e corta o resto.
-function friendlyVariantsError(raw: string): string {
+function friendlyProductsError(raw: string): string {
   if (raw.includes("ACCESS_DENIED") || raw.toLowerCase().includes("access denied")) {
     return "faltam permissões no app do Shopify (veja as instruções de escopo).";
   }
@@ -27,14 +27,14 @@ export function SyncButton() {
       const res = await fetch("/api/sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Falha na sincronizacao.");
-      if (data.variantsError) {
+      if (data.productsError) {
         setMessage(
-          `${data.ordersSynced} pedidos sincronizados. Estoque não sincronizou: ${friendlyVariantsError(data.variantsError)}`
+          `${data.ordersSynced} pedidos sincronizados. Produtos não sincronizaram: ${friendlyProductsError(data.productsError)}`
         );
         setIsError(true);
       } else {
         setMessage(
-          `${data.ordersSynced} pedidos e ${data.variantsSynced} itens de estoque sincronizados.`
+          `${data.ordersSynced} pedidos e ${data.productsSynced} produtos sincronizados.`
         );
       }
       router.refresh();

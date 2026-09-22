@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { prisma } from "./prisma";
 import {
   fetchOpenOrders,
-  fetchAllVariants,
+  fetchAllProducts,
   adminOrderUrl,
   personalizationAttributes,
   type ShopifyOrder,
@@ -32,8 +33,8 @@ export interface SyncResult {
   ordersSynced: number;
   lineItemsSynced: number;
   ordersClosed: number;
-  variantsSynced: number;
-  variantsError: string | null;
+  productsSynced: number;
+  productsError: string | null;
 }
 
 // Busca pedidos em aberto no Shopify e faz merge com o banco local:
@@ -99,53 +100,54 @@ export async function runSync(): Promise<SyncResult> {
     data: { stillOpenInShopify: false, lastSyncedAt: new Date() },
   });
 
-  // Sincronizar estoque e independente de pedidos -- se o token ainda nao
-  // tem escopo read_products, isso nao pode derrubar o sync de pedidos que
-  // ja funcionou.
-  let variantsSynced = 0;
-  let variantsError: string | null = null;
+  // Sincronizar produtos (so pro link automatico do site) e independente
+  // de pedidos -- se o token ainda nao tem escopo read_products, isso nao
+  // pode derrubar o sync de pedidos que ja funcionou.
+  let productsSynced = 0;
+  let productsError: string | null = null;
   try {
-    variantsSynced = await syncVariants();
+    productsSynced = await syncProducts();
   } catch (err) {
-    variantsError = err instanceof Error ? err.message : "Erro desconhecido ao sincronizar estoque.";
+    productsError = err instanceof Error ? err.message : "Erro desconhecido ao sincronizar produtos.";
   }
 
   return {
     ordersSynced: openOrders.length,
     lineItemsSynced,
     ordersClosed,
-    variantsSynced,
-    variantsError,
+    productsSynced,
+    productsError,
   };
 }
 
-// Atualiza a foto de estoque de todas as variantes -- so a quantidade em
-// si; nao mexe em nada da fila de producao de estoque (StockQueueItem).
-async function syncVariants(): Promise<number> {
-  const variants = await fetchAllVariants();
+// Atualiza titulo + link no site de todos os produtos -- so isso, pro
+// "Link do site" automatico na tela Agrupado por item. Vai em lotes (um
+// INSERT ... ON CONFLICT por lote) porque a loja tem centenas de produtos
+// e gravar um por um levava minutos.
+async function syncProducts(): Promise<number> {
+  const products = await fetchAllProducts();
+  const LOTE = 300;
 
-  for (const v of variants) {
-    await prisma.variant.upsert({
-      where: { shopifyVariantId: v.id },
-      create: {
-        shopifyVariantId: v.id,
-        inventoryItemId: v.inventoryItem.id,
-        productTitle: v.productTitle,
-        variantTitle: v.title === "Default Title" ? null : v.title,
-        sku: v.sku,
-        inventoryQuantity: v.inventoryQuantity ?? 0,
-        lastSyncedAt: new Date(),
-      },
-      update: {
-        inventoryItemId: v.inventoryItem.id,
-        productTitle: v.productTitle,
-        variantTitle: v.title === "Default Title" ? null : v.title,
-        sku: v.sku,
-        inventoryQuantity: v.inventoryQuantity ?? 0,
-        lastSyncedAt: new Date(),
-      },
-    });
+  for (let i = 0; i < products.length; i += LOTE) {
+    const lote = products.slice(i, i + LOTE);
+    const ids = lote.map(() => randomUUID());
+    const shopifyIds = lote.map((p) => p.id);
+    const titles = lote.map((p) => p.title);
+    const urls = lote.map((p) => p.onlineStoreUrl);
+
+    await prisma.$executeRaw`
+      INSERT INTO "ShopifyProduct"
+        ("id", "shopifyProductId", "title", "url", "lastSyncedAt", "createdAt", "updatedAt")
+      SELECT t.id, t.sp, t.title, t.url, now(), now(), now()
+      FROM unnest(${ids}::text[], ${shopifyIds}::text[], ${titles}::text[], ${urls}::text[])
+        AS t(id, sp, title, url)
+      ON CONFLICT ("shopifyProductId") DO UPDATE SET
+        "title" = EXCLUDED."title",
+        "url" = EXCLUDED."url",
+        "lastSyncedAt" = now(),
+        "updatedAt" = now()
+    `;
   }
 
-  return variants.length;
+  return products.length;
 }

@@ -1,10 +1,14 @@
-import { getPendingGroupedByProduct } from "@/lib/queries";
+import { getAutoSiteUrls, getPendingGroupedByProduct, getProductInfo } from "@/lib/queries";
 import { ProdutosList } from "@/components/ProdutosList";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProdutosPage() {
-  const grupos = await getPendingGroupedByProduct();
+  const [grupos, info, autoSiteUrls] = await Promise.all([
+    getPendingGroupedByProduct(),
+    getProductInfo(),
+    getAutoSiteUrls(),
+  ]);
 
   if (grupos.length === 0) {
     return (
@@ -20,7 +24,7 @@ export default async function ProdutosPage() {
         Itens pendentes de todos os pedidos abertos, agrupados por produto — para produzir em
         lote.
       </p>
-      <ProdutosList grupos={grupos} />
+      <ProdutosList grupos={grupos} info={info} autoSiteUrls={autoSiteUrls} />
     </div>
   );
 }

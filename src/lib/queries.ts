@@ -1,6 +1,5 @@
 import { prisma } from "./prisma";
-import { type CustomAttribute, type ProductGroup } from "./productGroups";
-import { LOW_STOCK_THRESHOLD } from "./stock";
+import { type CustomAttribute, type ProductGroup, type ProductInfoData } from "./productGroups";
 
 export async function getOpenOrders() {
   return prisma.order.findMany({
@@ -70,34 +69,20 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
   return Array.from(groups.values()).sort((a, b) => b.quantidadePendente - a.quantidadePendente);
 }
 
-// Variantes com estoque baixo que ainda nao tem uma fila de producao em
-// andamento -- pra mostrar o botao "Colocar na fila" (se ja tem fila,
-// mostra o progresso em vez do botao).
-export async function getLowStockVariants() {
-  return prisma.variant.findMany({
-    where: { inventoryQuantity: { lt: LOW_STOCK_THRESHOLD } },
-    include: {
-      stockQueueItems: {
-        where: { sincronizadoComShopify: false },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
-    orderBy: { inventoryQuantity: "asc" },
+// Mapa titulo do produto -> pagina no site, vinda do Shopify na
+// sincronizacao (so existe se o produto esta publicado no site).
+export async function getAutoSiteUrls(): Promise<Record<string, string>> {
+  const rows = await prisma.shopifyProduct.findMany({
+    where: { url: { not: null } },
+    select: { title: true, url: true },
   });
+  return Object.fromEntries(rows.map((r) => [r.title, r.url as string]));
 }
 
-export async function getStockQueue() {
-  return prisma.stockQueueItem.findMany({
-    orderBy: [{ concluido: "asc" }, { createdAt: "desc" }],
-  });
-}
-
-// Lista enxuta de todas as variantes pra o seletor de "adicionar item a
-// fila manualmente" (nao so as de estoque baixo).
-export async function getAllVariantsBasic() {
-  return prisma.variant.findMany({
-    select: { id: true, productTitle: true, variantTitle: true, inventoryQuantity: true },
-    orderBy: { productTitle: "asc" },
-  });
+// Mapa chave-do-grupo -> informacoes cadastradas (PDF, site, especificacoes).
+export async function getProductInfo(): Promise<Record<string, ProductInfoData>> {
+  const rows = await prisma.productInfo.findMany();
+  return Object.fromEntries(
+    rows.map((r) => [r.key, { printUrl: r.printUrl, siteUrl: r.siteUrl, specs: r.specs }])
+  );
 }
