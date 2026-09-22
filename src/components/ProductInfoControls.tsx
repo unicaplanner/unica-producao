@@ -3,10 +3,26 @@
 import { useEffect, useRef, useState } from "react";
 
 // So links http/https sao abertos pelo navegador. Qualquer outra coisa
-// (caminho tipo D:\pasta\arquivo.pdf) e tratado como caminho local: site nao
-// consegue abrir arquivo do computador, entao o clique copia o caminho.
+// (caminho tipo D:\pasta\arquivo.pdf, ou file:///D:/pasta/arquivo.pdf) e
+// tratada como caminho local: navegador BLOQUEIA um site abrir arquivo do
+// computador por seguranca (testado -- window.open pra file:// nao faz
+// nada, silenciosamente), entao o clique copia o caminho em vez de abrir.
 export function isWebLink(value: string): boolean {
   return /^https?:\/\//i.test(value);
+}
+
+// Se for um link "file:///D:/pasta/arquivo.pdf" (o que o navegador mostra
+// quando voce abre um PDF local nele e copia da barra de endereco),
+// devolve o caminho limpo "D:\pasta\arquivo.pdf" pra colar direto no
+// Explorer. Decodifica %20 etc. Caso contrario devolve o valor como esta.
+export function toExplorerPath(value: string): string {
+  const match = /^file:\/\/\/?([A-Za-z]:\/.*)$/i.exec(value);
+  if (!match) return value;
+  try {
+    return decodeURIComponent(match[1]).replace(/\//g, "\\");
+  } catch {
+    return value;
+  }
 }
 
 // Aceita "unicaplanner.com.br/produto" sem o https:// na frente.
@@ -78,7 +94,7 @@ export function PrintFileIcon({ url, onRegister }: { url: string | null; onRegis
       return;
     }
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(toExplorerPath(url));
       setAviso("Caminho copiado");
     } catch {
       setAviso("Não consegui copiar");
@@ -92,7 +108,7 @@ export function PrintFileIcon({ url, onRegister }: { url: string | null; onRegis
         type="button"
         onClick={onClick}
         aria-label={url ? "Abrir arquivo de impressão" : "Cadastrar arquivo de impressão"}
-        title={url ? url : "Cadastrar arquivo de impressão (PDF)"}
+        title={url ? (isWebLink(url) ? url : toExplorerPath(url)) : "Cadastrar arquivo de impressão (PDF)"}
         className={`rounded-md p-1 transition-colors ${
           url
             ? "bg-vinho-bg text-vinho hover:bg-vinho-border"

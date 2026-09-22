@@ -58,7 +58,7 @@ const FORM_CONFIG: Record<
     field: "printUrl",
     titulo: "Arquivo de impressão (PDF)",
     placeholder: "Cole o link ou o caminho do PDF",
-    hint: "Link (Drive, Dropbox…) abre direto ao clicar no ícone. Caminho do computador (D:\\pasta\\arquivo.pdf) é copiado ao clicar, porque o navegador não abre arquivos locais.",
+    hint: "Link (Drive, Dropbox…) abre direto ao clicar no ícone — pra isso funcionar em 1 clique, o PDF precisa estar num link assim. Caminho do computador (D:\\pasta\\arquivo.pdf, ou o file:///D:/... que o navegador mostra ao abrir um PDF local) é copiado ao clicar em vez de abrir: nenhum site consegue abrir arquivo do seu computador, é bloqueio do navegador.",
   },
   site: {
     field: "siteUrl",
