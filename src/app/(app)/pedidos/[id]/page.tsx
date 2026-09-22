@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOrderById, getUnboxedOpenOrders } from "@/lib/queries";
+import { getOrderById, getProductInfo, getUnboxedOpenOrders } from "@/lib/queries";
 import { formatCustomAttributes, type CustomAttribute } from "@/lib/productGroups";
 import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
+import { LineItemPrintFile } from "@/components/LineItemPrintFile";
 import { BoxChecklist } from "@/components/BoxChecklist";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   const priority = getPriority(order.prazoLimite);
   const unboxed = await getUnboxedOpenOrders();
   const candidatos = unboxed.filter((o) => o.id !== order.id);
+  const info = await getProductInfo();
 
   return (
     <div className="space-y-6">
@@ -79,12 +81,16 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
             const texto = formatCustomAttributes(
               (item.customAttributes as CustomAttribute[] | null) ?? []
             );
+            const itemKey = `${item.title}::${item.variantTitle ?? ""}`;
             return (
               <li key={item.id} className="flex items-center justify-between gap-4 px-4 py-3">
                 <div>
-                  <p className="font-semibold text-ink">
-                    {item.quantity}× {item.title}
-                  </p>
+                  <div className="flex items-center gap-2 font-semibold text-ink">
+                    <span>
+                      {item.quantity}× {item.title}
+                    </span>
+                    <LineItemPrintFile itemKey={itemKey} initialUrl={info[itemKey]?.printUrl ?? null} />
+                  </div>
                   {item.variantTitle && <p className="text-sm text-muted">{item.variantTitle}</p>}
                   {item.sku && <p className="text-xs text-muted/70">SKU {item.sku}</p>}
                   {texto && (
