@@ -1,9 +1,14 @@
 import { prisma } from "./prisma";
 import { type CustomAttribute, type ProductGroup, type ProductInfoData } from "./productGroups";
 
+// Pedido "em aberto pra produção" = ainda aberto no Shopify E com
+// pagamento aprovado. Pedido pendente/expirado/autorizado (nao PAID) nao
+// entra em nenhuma tela daqui -- so aparece se/quando o pagamento cair.
+const OPEN_PAID = { stillOpenInShopify: true, financialStatus: "PAID" } as const;
+
 export async function getOpenOrders() {
   return prisma.order.findMany({
-    where: { stillOpenInShopify: true },
+    where: OPEN_PAID,
     include: { lineItems: { orderBy: { title: "asc" } } },
     orderBy: { prazoLimite: "asc" },
   });
@@ -23,7 +28,7 @@ export async function getOrderById(id: string) {
 // -- e o "candidatos pra agrupar" do seletor de caixa.
 export async function getUnboxedOpenOrders() {
   return prisma.order.findMany({
-    where: { stillOpenInShopify: true, boxId: null },
+    where: { ...OPEN_PAID, boxId: null },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });
@@ -36,7 +41,7 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
   const pendingItems = await prisma.lineItem.findMany({
     where: {
       statusProducao: "pendente",
-      order: { stillOpenInShopify: true },
+      order: OPEN_PAID,
     },
     include: { order: true },
   });
