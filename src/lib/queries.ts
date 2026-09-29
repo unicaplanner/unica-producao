@@ -24,11 +24,40 @@ export async function getOrderById(id: string) {
   });
 }
 
-// Lista enxuta de pedidos abertos que ainda nao entraram em nenhuma caixa
-// -- e o "candidatos pra agrupar" do seletor de caixa.
-export async function getUnboxedOpenOrders() {
+// Candidatos pra agrupar na mesma caixa de um pedido: qualquer outro
+// pedido aberto pago que ainda nao esteja nessa mesma caixa (toda ordem ja
+// nasce com uma caixa propria, entao "candidato" nao significa mais "sem
+// caixa nenhuma" -- significa "numa caixa diferente da minha").
+export async function getGroupableOpenOrders(excludeOrderId: string, excludeBoxId: string | null) {
   return prisma.order.findMany({
-    where: { ...OPEN_PAID, boxId: null },
+    where: {
+      ...OPEN_PAID,
+      id: { not: excludeOrderId },
+      ...(excludeBoxId ? { boxId: { not: excludeBoxId } } : {}),
+    },
+    select: { id: true, name: true, boxId: true, customerId: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+// Outros pedidos abertos pagos do mesmo cliente (mesmo customerId), ainda
+// nao agrupados na mesma caixa -- vira a sugestao "agrupar na mesma caixa?"
+// na tela do pedido. So usa o id do cliente (nunca nome/email), que e o
+// unico dado de cliente que nosso app consegue ler no plano Basic.
+export async function getSameCustomerCandidates(orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { customerId: true, boxId: true },
+  });
+  if (!order?.customerId) return [];
+
+  return prisma.order.findMany({
+    where: {
+      ...OPEN_PAID,
+      customerId: order.customerId,
+      id: { not: orderId },
+      ...(order.boxId ? { boxId: { not: order.boxId } } : {}),
+    },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   });

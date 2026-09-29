@@ -34,6 +34,11 @@ model Order {
 
   shippingMethod String? // nome do frete escolhido no checkout (ex: "PAC", "Sedex")
 
+  // gid do cliente (Customer.id) -- so o id, nunca nome/email/telefone,
+  // que a Shopify bloqueia pro nosso tipo de app no plano Basic. Da pra
+  // usar pra detectar "mesmo cliente em outro pedido" sem PII nenhuma.
+  customerId String?
+
   adminUrl String // link direto pro pedido no admin do Shopify
 
   lastSyncedAt DateTime @default(now())
@@ -50,6 +55,7 @@ model Order {
 
   @@index([fulfillmentStatus])
   @@index([prazoLimite])
+  @@index([customerId])
 }
 
 // O checklist de embalagem/envio vive na caixa, nao no pedido -- pedidos

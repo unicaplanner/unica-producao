@@ -23,6 +23,7 @@ function orderData(order: ShopifyOrder, domain: string) {
     totalPrice: order.currentTotalPriceSet.shopMoney.amount,
     currency: order.currentTotalPriceSet.shopMoney.currencyCode,
     shippingMethod: order.shippingLine?.title ?? null,
+    customerId: order.customer?.id ?? null,
     adminUrl: adminOrderUrl(domain, order.id),
     stillOpenInShopify: true,
     lastSyncedAt: new Date(),
@@ -62,6 +63,15 @@ export async function runSync(): Promise<SyncResult> {
       create: { shopifyId: order.id, ...data },
       update: data,
     });
+
+    // Toda ordem ja nasce com uma caixa propria (o checklist de embalagem
+    // fica pronto pra marcar desde o primeiro acesso, sem precisar clicar
+    // em "Montar caixa" antes). Agrupar com outro pedido move pra caixa
+    // dele depois, se for o caso.
+    if (!dbOrder.boxId) {
+      const box = await prisma.box.create({ data: {} });
+      await prisma.order.update({ where: { id: dbOrder.id }, data: { boxId: box.id } });
+    }
 
     for (const edge of order.lineItems.edges) {
       const li = edge.node;

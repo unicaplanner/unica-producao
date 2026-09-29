@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOrderById, getProductInfo, getUnboxedOpenOrders } from "@/lib/queries";
+import {
+  getGroupableOpenOrders,
+  getOrderById,
+  getProductInfo,
+  getSameCustomerCandidates,
+} from "@/lib/queries";
 import { formatCustomAttributes, type CustomAttribute } from "@/lib/productGroups";
 import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
 import { LineItemPrintFile } from "@/components/LineItemPrintFile";
 import { BoxChecklist } from "@/components/BoxChecklist";
+import { SameCustomerSuggestion } from "@/components/SameCustomerSuggestion";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +22,9 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   if (!order) notFound();
 
   const priority = getPriority(order.prazoLimite);
-  const unboxed = await getUnboxedOpenOrders();
-  const candidatos = unboxed.filter((o) => o.id !== order.id);
+  const candidatosRaw = await getGroupableOpenOrders(order.id, order.boxId);
+  const candidatos = candidatosRaw.map((o) => ({ id: o.id, name: o.name }));
+  const mesmoCliente = await getSameCustomerCandidates(order.id);
   const info = await getProductInfo();
 
   return (
@@ -114,6 +121,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           Embalagem
         </h2>
         <div className="p-4">
+          {order.box && <SameCustomerSuggestion boxId={order.box.id} candidatos={mesmoCliente} />}
           <BoxChecklist orderId={order.id} box={order.box} candidatos={candidatos} />
         </div>
       </div>
