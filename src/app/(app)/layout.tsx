@@ -1,6 +1,7 @@
 import { SyncButton } from "@/components/SyncButton";
 import { LogoutButton } from "@/components/LogoutButton";
 import { NavTabs } from "@/components/NavTabs";
+import { SyncStatusBadge } from "@/components/SyncStatusBadge";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div>
             <h1 className="text-lg font-bold text-ink">Central de Produção</h1>
             <p className="text-xs text-muted">Unica Planner</p>
+            <SyncStatusBadge />
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <NavTabs />

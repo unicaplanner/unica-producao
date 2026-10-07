@@ -142,3 +142,14 @@ model ShopifyProduct {
 
   @@index([title])
 }
+
+// Uma linha so (id fixo "singleton"): resultado da ultima sincronizacao
+// com o Shopify. Alimenta o indicador "Ultima sincronizacao" na tela e o
+// vigia diario que avisa por e-mail se o sync parou de dar certo.
+model SyncStatus {
+  id            String    @id @default("singleton")
+  lastAttemptAt DateTime?
+  lastSuccessAt DateTime?
+  lastError     String?
+  updatedAt     DateTime  @updatedAt
+}
