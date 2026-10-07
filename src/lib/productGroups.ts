@@ -17,6 +17,7 @@ export interface ProductGroup {
     lineItemId: string;
     orderId: string;
     orderName: string;
+    clienteNome: string | null;
     prazoLimite: Date;
     quantity: number;
     customAttributes: CustomAttribute[];

@@ -75,6 +75,7 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
     include: { order: true },
   });
 
+  const nomes = await getCustomerNames(pendingItems.map((i) => i.order.customerId));
   const groups = new Map<string, ProductGroup>();
 
   for (const item of pendingItems) {
@@ -94,6 +95,7 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
       lineItemId: item.id,
       orderId: item.orderId,
       orderName: item.order.name,
+      clienteNome: (item.order.customerId && nomes[item.order.customerId]) || null,
       prazoLimite: item.order.prazoLimite,
       quantity: item.quantity,
       customAttributes: (item.customAttributes as CustomAttribute[] | null) ?? [],
@@ -119,4 +121,14 @@ export async function getProductInfo(): Promise<Record<string, ProductInfoData>>
   return Object.fromEntries(
     rows.map((r) => [r.key, { printUrl: r.printUrl, siteUrl: r.siteUrl, specs: r.specs }])
   );
+}
+
+// Mapa customerId do Shopify -> nome digitado a mao (so os que ja tem nome).
+export async function getCustomerNames(
+  customerIds: (string | null | undefined)[]
+): Promise<Record<string, string>> {
+  const ids = Array.from(new Set(customerIds.filter((id): id is string => !!id)));
+  if (ids.length === 0) return {};
+  const rows = await prisma.customer.findMany({ where: { id: { in: ids } } });
+  return Object.fromEntries(rows.map((r) => [r.id, r.nome]));
 }

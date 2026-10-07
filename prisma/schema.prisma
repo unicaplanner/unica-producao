@@ -153,3 +153,15 @@ model SyncStatus {
   lastError     String?
   updatedAt     DateTime  @updatedAt
 }
+
+// Nome da cliente digitado a mao, uma vez por cliente. A chave e o
+// customerId do Shopify (unico dado de cliente que nosso app consegue ler
+// no plano Basic), entao o nome vale pra todos os pedidos dela, atuais e
+// futuros. Nao tem FK de proposito: o sync nao precisa conhecer esta tabela.
+model Customer {
+  id   String @id // gid://shopify/Customer/123...
+  nome String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

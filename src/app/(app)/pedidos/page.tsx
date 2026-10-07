@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getOpenOrders } from "@/lib/queries";
+import { getCustomerNames, getOpenOrders } from "@/lib/queries";
 import {
   formatDiasRestantes,
   getDiasRestantes,
@@ -28,6 +28,7 @@ export default async function PedidosPage({
   const filtro = PRIORITY_ORDER.includes(prioridade as Priority) ? (prioridade as Priority) : null;
 
   const orders = await getOpenOrders();
+  const nomes = await getCustomerNames(orders.map((o) => o.customerId));
   const now = new Date();
   const comPrioridade = orders.map((order) => ({ order, priority: getPriority(order.prazoLimite, now) }));
   const filtrados = filtro ? comPrioridade.filter((o) => o.priority === filtro) : comPrioridade;
@@ -64,6 +65,7 @@ export default async function PedidosPage({
           <thead>
             <tr className="bg-header-bg">
               <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Pedido</th>
+              <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Cliente</th>
               <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Itens</th>
               <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Prazo</th>
               <th className="px-3.5 py-2.5 text-left text-[11px] font-bold text-muted">Status</th>
@@ -72,7 +74,7 @@ export default async function PedidosPage({
           <tbody>
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3.5 py-6 text-center text-muted">
+                <td colSpan={5} className="px-3.5 py-6 text-center text-muted">
                   Nenhum pedido encontrado.
                 </td>
               </tr>
@@ -86,6 +88,9 @@ export default async function PedidosPage({
                     <Link href={`/pedidos/${order.id}`} className="font-semibold text-ink hover:underline">
                       {order.name}
                     </Link>
+                  </td>
+                  <td className="px-3.5 py-3 text-ink">
+                    {(order.customerId && nomes[order.customerId]) || <span className="text-muted">—</span>}
                   </td>
                   <td className="px-3.5 py-3 text-muted">
                     {order.lineItems.length} item{order.lineItems.length === 1 ? "" : "s"} (

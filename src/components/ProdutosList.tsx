@@ -27,6 +27,7 @@ function titleMatches(grupo: ProductGroup, termo: string): boolean {
 
 function pedidoMatches(p: ProductGroup["pedidos"][number], termo: string): boolean {
   if (normalize(p.orderName).includes(termo)) return true;
+  if (p.clienteNome && normalize(p.clienteNome).includes(termo)) return true;
   return p.customAttributes.some(
     (a) => normalize(a.key).includes(termo) || normalize(a.value).includes(termo),
   );
@@ -180,7 +181,8 @@ export function ProdutosList({
                         className="flex items-center justify-between gap-4 border-b border-border px-4 py-2.5 text-sm last:border-b-0"
                       >
                         <Link href={`/pedidos/${p.orderId}`} className="text-ink hover:underline">
-                          {p.orderName} · {p.quantity}× · prazo{" "}
+                          {p.orderName}
+                          {p.clienteNome && <span className="text-muted"> · {p.clienteNome}</span>} · {p.quantity}× · prazo{" "}
                           {p.prazoLimite.toLocaleDateString("pt-BR")}
                           {texto && (
                             <span className="ml-2 rounded-full bg-ocre-bg px-2 py-0.5 text-xs font-semibold text-ocre">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  getCustomerNames,
   getGroupableOpenOrders,
   getOrderById,
   getProductInfo,
@@ -11,6 +12,7 @@ import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
 import { LineItemPrintFile } from "@/components/LineItemPrintFile";
+import { CustomerName } from "@/components/CustomerName";
 import { BoxChecklist } from "@/components/BoxChecklist";
 import { SameCustomerSuggestion } from "@/components/SameCustomerSuggestion";
 
@@ -26,6 +28,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   const candidatos = candidatosRaw.map((o) => ({ id: o.id, name: o.name }));
   const mesmoCliente = await getSameCustomerCandidates(order.id);
   const info = await getProductInfo();
+  const nomes = await getCustomerNames([order.customerId]);
 
   return (
     <div className="space-y-6">
@@ -37,6 +40,10 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-ink">{order.name}</h1>
+            <CustomerName
+              customerId={order.customerId}
+              nome={(order.customerId && nomes[order.customerId]) || null}
+            />
           </div>
           <PriorityBadge priority={priority} />
         </div>
@@ -69,14 +76,16 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           </div>
         </dl>
 
-        <a
-          href={order.adminUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-block text-sm text-vinho hover:underline"
-        >
-          Abrir no admin do Shopify →
-        </a>
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+          <a
+            href={order.adminUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-vinho hover:underline"
+          >
+            Abrir no admin do Shopify →
+          </a>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-[10px] border border-border">
