@@ -85,6 +85,14 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           >
             Abrir no admin do Shopify →
           </a>
+          <a
+            href={`/imprimir/pedido/${order.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-vinho hover:underline"
+          >
+            Imprimir ficha A5
+          </a>
         </div>
       </div>
 
