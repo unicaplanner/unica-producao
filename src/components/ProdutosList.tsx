@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  filterGroupsByOrderDate,
   formatCustomAttributes,
   type ProductGroup,
   type ProductInfoData,
@@ -86,6 +87,7 @@ export function ProdutosList({
   autoSiteUrls: Record<string, string>;
 }) {
   const [busca, setBusca] = useState("");
+  const [ate, setAte] = useState("");
   const [info, setInfo] = useState(infoInicial);
   const [editando, setEditando] = useState<{ key: string; kind: InfoKind } | null>(null);
 
@@ -105,10 +107,14 @@ export function ProdutosList({
   }
 
   const filtrados = useMemo(() => {
+    const porData = ate ? filterGroupsByOrderDate(grupos, ate) : grupos;
     const termo = normalize(busca.trim());
-    if (!termo) return grupos;
-    return grupos.map((g) => filterGroup(g, termo)).filter((g): g is ProductGroup => g !== null);
-  }, [grupos, busca]);
+    if (!termo) return porData;
+    return porData.map((g) => filterGroup(g, termo)).filter((g): g is ProductGroup => g !== null);
+  }, [grupos, busca, ate]);
+
+  const totalPendente = filtrados.reduce((s, g) => s + g.quantidadePendente, 0);
+  const ateFormatado = ate ? ate.split("-").reverse().join("/") : "";
 
   return (
     <div className="space-y-4">
@@ -120,9 +126,44 @@ export function ProdutosList({
         className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm text-ink placeholder:text-muted focus:border-vinho focus:outline-none"
       />
 
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <label className="flex items-center gap-2 text-muted">
+          Pedidos feitos até
+          <input
+            type="date"
+            value={ate}
+            onChange={(e) => setAte(e.target.value)}
+            className="rounded-full border border-border bg-background px-3 py-1.5 text-sm text-ink focus:border-vinho focus:outline-none"
+          />
+        </label>
+        {ate && (
+          <button
+            onClick={() => setAte("")}
+            className="rounded-full bg-border-soft px-3 py-1 text-xs font-semibold text-ink hover:bg-border"
+          >
+            Limpar filtro
+          </button>
+        )}
+        <span className="text-xs text-muted">
+          {totalPendente} unidade{totalPendente === 1 ? "" : "s"} em {filtrados.length} produto
+          {filtrados.length === 1 ? "" : "s"}
+          {ate && ` · pedidos até ${ateFormatado}, do mais urgente ao menos`}
+        </span>
+        <a
+          href={ate ? `/imprimir/producao?ate=${ate}` : "/imprimir/producao"}
+          target="_blank"
+          rel="noreferrer"
+          className="ml-auto rounded-full bg-border-soft px-3 py-1 text-xs font-semibold text-ink hover:bg-border"
+        >
+          Imprimir lista A5{ate ? ` (até ${ateFormatado})` : ""}
+        </a>
+      </div>
+
       {filtrados.length === 0 ? (
         <div className="rounded-[10px] border border-dashed border-border p-8 text-center text-muted">
-          Nenhum item encontrado para &quot;{busca}&quot;.
+          {busca
+            ? `Nenhum item encontrado para "${busca}".`
+            : "Nenhum item pendente nesse período."}
         </div>
       ) : (
         <div className="space-y-3">

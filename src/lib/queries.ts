@@ -95,11 +95,20 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
       lineItemId: item.id,
       orderId: item.orderId,
       orderName: item.order.name,
+      orderDate: item.order.orderDate,
       clienteNome: (item.order.customerId && nomes[item.order.customerId]) || null,
       prazoLimite: item.order.prazoLimite,
       quantity: item.quantity,
       customAttributes: (item.customAttributes as CustomAttribute[] | null) ?? [],
     });
+  }
+
+  // Dentro de cada produto: pedido mais antigo (prazo mais proximo) primeiro.
+  for (const g of groups.values()) {
+    g.pedidos.sort(
+      (a, b) =>
+        a.prazoLimite.getTime() - b.prazoLimite.getTime() || a.orderName.localeCompare(b.orderName)
+    );
   }
 
   return Array.from(groups.values()).sort((a, b) => b.quantidadePendente - a.quantidadePendente);

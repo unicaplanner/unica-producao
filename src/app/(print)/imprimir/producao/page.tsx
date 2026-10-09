@@ -1,5 +1,5 @@
 import { getPendingGroupedByProduct } from "@/lib/queries";
-import { formatCustomAttributes } from "@/lib/productGroups";
+import { filterGroupsByOrderDate, formatCustomAttributes } from "@/lib/productGroups";
 import { getPriority } from "@/lib/priority";
 import { PrintToolbar } from "@/components/PrintToolbar";
 import { PrintCheckbox } from "@/components/PrintCheckbox";
@@ -8,8 +8,15 @@ export const dynamic = "force-dynamic";
 
 // Lista de producao em lote, em A5: um bloco por produto, uma linha com
 // quadradinho por pedido. Mesmos dados da tela "Agrupado por item".
-export default async function ImprimirProducaoPage() {
-  const grupos = await getPendingGroupedByProduct();
+export default async function ImprimirProducaoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ate?: string }>;
+}) {
+  const { ate } = await searchParams;
+  const todos = await getPendingGroupedByProduct();
+  const grupos = ate ? filterGroupsByOrderDate(todos, ate) : todos;
+  const ateFormatado = ate && grupos !== todos ? ate.split("-").reverse().join("/") : null;
   const hoje = new Date();
   const totalItens = grupos.reduce((s, g) => s + g.quantidadePendente, 0);
 
@@ -22,6 +29,7 @@ export default async function ImprimirProducaoPage() {
           <p className="text-[8.5pt]">
             {hoje.toLocaleDateString("pt-BR")} · {totalItens} unidades pendentes em{" "}
             {grupos.length} produtos
+            {ateFormatado && <> · pedidos feitos até {ateFormatado}, do mais urgente ao menos</>}
           </p>
         </header>
 
