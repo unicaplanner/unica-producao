@@ -12,6 +12,8 @@ import { getPriority } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { LineItemCheckbox } from "@/components/LineItemCheckbox";
 import { LineItemPrintFile } from "@/components/LineItemPrintFile";
+import { KitBadge } from "@/components/KitBadge";
+import { isKitOnlyOrder } from "@/lib/kits";
 import { CustomerName } from "@/components/CustomerName";
 import { BoxChecklist } from "@/components/BoxChecklist";
 import { SameCustomerSuggestion } from "@/components/SameCustomerSuggestion";
@@ -45,7 +47,10 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
               nome={(order.customerId && nomes[order.customerId]) || null}
             />
           </div>
-          <PriorityBadge priority={priority} />
+          <div className="flex items-center gap-2">
+            {isKitOnlyOrder(order.lineItems) && <KitBadge />}
+            <PriorityBadge priority={priority} />
+          </div>
         </div>
 
         <dl className="mt-4 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">

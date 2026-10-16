@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getOpenOrders } from "@/lib/queries";
 import { getPriority, PRIORITY_ORDER } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { KitBadge } from "@/components/KitBadge";
+import { isKitOnlyOrder, kitsFirst } from "@/lib/kits";
 import { StatCard } from "@/components/StatCard";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +47,7 @@ export default async function DashboardPage() {
       </div>
 
       {PRIORITY_ORDER.map((priority) => {
-        const list = buckets.get(priority)!;
+        const list = kitsFirst(buckets.get(priority)!);
         if (list.length === 0) return null;
         return (
           <section key={priority}>
@@ -66,7 +68,10 @@ export default async function DashboardPage() {
                         className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-header-bg"
                       >
                         <div>
-                          <p className="font-semibold text-ink">{order.name}</p>
+                          <p className="flex items-center gap-2 font-semibold text-ink">
+                            {order.name}
+                            {isKitOnlyOrder(order.lineItems) && <KitBadge />}
+                          </p>
                           <p className="text-sm text-muted">
                             Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · prazo{" "}
                             {order.prazoLimite.toLocaleDateString("pt-BR")}

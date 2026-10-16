@@ -10,6 +10,8 @@ import {
   type Priority,
 } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { KitBadge } from "@/components/KitBadge";
+import { isKitOnlyOrder, kitsFirst } from "@/lib/kits";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +33,12 @@ export default async function PedidosPage({
   const nomes = await getCustomerNames(orders.map((o) => o.customerId));
   const now = new Date();
   const comPrioridade = orders.map((order) => ({ order, priority: getPriority(order.prazoLimite, now) }));
-  const filtrados = filtro ? comPrioridade.filter((o) => o.priority === filtro) : comPrioridade;
+  const filtrados = kitsFirst(
+    (filtro ? comPrioridade.filter((o) => o.priority === filtro) : comPrioridade).map((o) => ({
+      ...o,
+      lineItems: o.order.lineItems,
+    }))
+  );
 
   return (
     <div className="space-y-4">
@@ -88,6 +95,11 @@ export default async function PedidosPage({
                     <Link href={`/pedidos/${order.id}`} className="font-semibold text-ink hover:underline">
                       {order.name}
                     </Link>
+                    {isKitOnlyOrder(order.lineItems) && (
+                      <span className="ml-2">
+                        <KitBadge />
+                      </span>
+                    )}
                   </td>
                   <td className="px-3.5 py-3 text-ink">
                     {(order.customerId && nomes[order.customerId]) || <span className="text-muted">—</span>}
