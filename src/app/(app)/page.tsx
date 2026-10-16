@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getOpenOrders } from "@/lib/queries";
 import { getPriority, PRIORITY_ORDER } from "@/lib/priority";
 import { PriorityBadge } from "@/components/PriorityBadge";
+import { OrderSelectBox, OrderSelectionProvider, SelectAllBox } from "@/components/OrderSelection";
 import { KitBadge } from "@/components/KitBadge";
 import { isKitOnlyOrder, kitsFirst } from "@/lib/kits";
 import { StatCard } from "@/components/StatCard";
@@ -32,6 +33,7 @@ export default async function DashboardPage() {
   }
 
   return (
+    <OrderSelectionProvider>
     <div className="space-y-8">
       <div>
         <div className="flex flex-col gap-2.5 sm:flex-row">
@@ -54,6 +56,9 @@ export default async function DashboardPage() {
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
               <PriorityBadge priority={priority} />
               <span className="font-normal text-muted">({list.length})</span>
+              <span className="ml-auto">
+                <SelectAllBox ids={list.map((o) => o.id)} label="Selecionar todos" />
+              </span>
             </h2>
             <div className="overflow-hidden rounded-[10px] border border-border">
               <ul className="divide-y divide-border-soft">
@@ -62,10 +67,13 @@ export default async function DashboardPage() {
                     (li) => li.statusProducao === "pendente"
                   ).length;
                   return (
-                    <li key={order.id}>
+                    <li key={order.id} className="flex items-center hover:bg-header-bg">
+                      <span className="pl-4">
+                        <OrderSelectBox id={order.id} label={order.name} />
+                      </span>
                       <Link
                         href={`/pedidos/${order.id}`}
-                        className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-header-bg"
+                        className="flex flex-1 items-center justify-between gap-4 px-4 py-3"
                       >
                         <div>
                           <p className="flex items-center gap-2 font-semibold text-ink">
@@ -90,5 +98,6 @@ export default async function DashboardPage() {
         );
       })}
     </div>
+    </OrderSelectionProvider>
   );
 }

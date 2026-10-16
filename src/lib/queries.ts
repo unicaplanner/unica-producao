@@ -141,3 +141,17 @@ export async function getCustomerNames(
   const rows = await prisma.customer.findMany({ where: { id: { in: ids } } });
   return Object.fromEntries(rows.map((r) => [r.id, r.nome]));
 }
+
+// Varios pedidos de uma vez (impressao de fichas), na ordem dos ids pedidos.
+export async function getOrdersByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+  const rows = await prisma.order.findMany({
+    where: { id: { in: ids } },
+    include: {
+      lineItems: { orderBy: { title: "asc" } },
+      box: { include: { orders: { orderBy: { name: "asc" } } } },
+    },
+  });
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  return ids.map((id) => byId.get(id)).filter((r): r is NonNullable<typeof r> => !!r);
+}
