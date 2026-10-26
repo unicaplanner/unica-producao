@@ -1,5 +1,6 @@
 import { formatCustomAttributes, type CustomAttribute } from "@/lib/productGroups";
 import { getPriority, PRIORITY_LABEL } from "@/lib/priority";
+import { isUnicaBoxOrder } from "@/lib/unicaBox";
 import { PrintCheckbox } from "@/components/PrintCheckbox";
 import type { getOrderById } from "@/lib/queries";
 
@@ -15,6 +16,7 @@ export function FichaPedido({
   order: OrderComCaixa;
   clienteNome: string | null;
 }) {
+  const unicaBox = isUnicaBoxOrder(order.lineItems);
   const priority = getPriority(order.prazoLimite);
   const box = order.box;
   const outrosNaCaixa = box?.orders.filter((o) => o.id !== order.id) ?? [];
@@ -24,12 +26,16 @@ export function FichaPedido({
       <header className="mb-3 border-b-[0.4mm] border-black pb-2">
         <div className="flex items-baseline justify-between">
           <h1 className="text-[18pt] font-bold">Pedido {order.name}</h1>
-          <b className="text-[9pt] uppercase">{PRIORITY_LABEL[priority]}</b>
+          <b className="text-[9pt] uppercase">{unicaBox ? "Unica Box" : PRIORITY_LABEL[priority]}</b>
         </div>
         {clienteNome && <p className="text-[12pt] font-bold">{clienteNome}</p>}
         <p className="text-[9pt]">
-          Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · <b>prazo{" "}
-          {order.prazoLimite.toLocaleDateString("pt-BR")}</b>
+          Pedido em {order.orderDate.toLocaleDateString("pt-BR")} ·{" "}
+          {unicaBox ? (
+            <b>assinatura — prazo especial</b>
+          ) : (
+            <b>prazo {order.prazoLimite.toLocaleDateString("pt-BR")}</b>
+          )}
         </p>
         <p className="text-[9pt]">
           Frete: {order.shippingMethod ?? "—"} · Pagamento: {order.financialStatus ?? "—"}

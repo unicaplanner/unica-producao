@@ -223,8 +223,14 @@ export function ProdutosList({
                       >
                         <Link href={`/pedidos/${p.orderId}`} className="text-ink hover:underline">
                           {p.orderName}
-                          {p.clienteNome && <span className="text-muted"> · {p.clienteNome}</span>} · {p.quantity}× · prazo{" "}
-                          {p.prazoLimite.toLocaleDateString("pt-BR")}
+                          {p.clienteNome && <span className="text-muted"> · {p.clienteNome}</span>} · {p.quantity}×
+                          {p.unicaBox ? (
+                            <span className="ml-2 rounded-full bg-ink px-2 py-0.5 text-xs font-semibold text-white">
+                              Unica Box
+                            </span>
+                          ) : (
+                            ` · prazo ${p.prazoLimite.toLocaleDateString("pt-BR")}`
+                          )}
                           {texto && (
                             <span className="ml-2 rounded-full bg-ocre-bg px-2 py-0.5 text-xs font-semibold text-ocre">
                               {texto}

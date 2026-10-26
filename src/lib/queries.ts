@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { isUnicaBoxOrder } from "./unicaBox";
 import { type CustomAttribute, type ProductGroup, type ProductInfoData } from "./productGroups";
 
 // Pedido "em aberto pra produção" = ainda aberto no Shopify E com
@@ -72,7 +73,7 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
       statusProducao: "pendente",
       order: OPEN_PAID,
     },
-    include: { order: true },
+    include: { order: { include: { lineItems: { select: { title: true } } } } },
   });
 
   const nomes = await getCustomerNames(pendingItems.map((i) => i.order.customerId));
@@ -96,6 +97,7 @@ export async function getPendingGroupedByProduct(): Promise<ProductGroup[]> {
       orderId: item.orderId,
       orderName: item.order.name,
       orderDate: item.order.orderDate,
+      unicaBox: isUnicaBoxOrder(item.order.lineItems),
       clienteNome: (item.order.customerId && nomes[item.order.customerId]) || null,
       prazoLimite: item.order.prazoLimite,
       quantity: item.quantity,

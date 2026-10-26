@@ -13,6 +13,9 @@ import { PriorityBadge } from "@/components/PriorityBadge";
 import { OrderSelectBox, OrderSelectionProvider, SelectAllBox } from "@/components/OrderSelection";
 import { KitBadge } from "@/components/KitBadge";
 import { isKitOnlyOrder, kitsFirst } from "@/lib/kits";
+import { UnicaBoxBadge } from "@/components/UnicaBoxBadge";
+import { isUnicaBoxOrder } from "@/lib/unicaBox";
+import { unicaBoxLast } from "@/lib/unicaBox";
 
 export const dynamic = "force-dynamic";
 
@@ -28,18 +31,32 @@ export default async function PedidosPage({
   searchParams: Promise<{ prioridade?: string }>;
 }) {
   const { prioridade } = await searchParams;
-  const filtro = PRIORITY_ORDER.includes(prioridade as Priority) ? (prioridade as Priority) : null;
+  const filtro: Priority | "unica_box" | null =
+    prioridade === "unica_box"
+      ? "unica_box"
+      : PRIORITY_ORDER.includes(prioridade as Priority)
+        ? (prioridade as Priority)
+        : null;
 
   const orders = await getOpenOrders();
   const nomes = await getCustomerNames(orders.map((o) => o.customerId));
   const now = new Date();
-  const comPrioridade = orders.map((order) => ({ order, priority: getPriority(order.prazoLimite, now) }));
-  const filtrados = kitsFirst(
-    (filtro ? comPrioridade.filter((o) => o.priority === filtro) : comPrioridade).map((o) => ({
-      ...o,
-      lineItems: o.order.lineItems,
-    }))
+  // Unica Box (assinatura paga antecipada, prazo especial) nunca conta como atrasado.
+  const comPrioridade = orders.map((order) => ({
+    order,
+    priority: (isUnicaBoxOrder(order.lineItems)
+      ? "unica_box"
+      : getPriority(order.prazoLimite, now)) as Priority | "unica_box",
+  }));
+  const filtrados = unicaBoxLast(
+    kitsFirst(
+      (filtro ? comPrioridade.filter((o) => o.priority === filtro) : comPrioridade).map((o) => ({
+        ...o,
+        lineItems: o.order.lineItems,
+      }))
+    )
   );
+  const totalUnicaBox = comPrioridade.filter((o) => o.priority === "unica_box").length;
 
   return (
     <OrderSelectionProvider>
@@ -67,6 +84,16 @@ export default async function PedidosPage({
             </Link>
           );
         })}
+        {totalUnicaBox > 0 && (
+          <Link
+            href="/pedidos?prioridade=unica_box"
+            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+              filtro === "unica_box" ? "bg-vinho text-white" : "bg-border-soft text-ink/70 hover:bg-border"
+            }`}
+          >
+            Unica Box ({totalUnicaBox})
+          </Link>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-[10px] border border-border">
@@ -116,11 +143,15 @@ export default async function PedidosPage({
                     {order.lineItems.length} item{order.lineItems.length === 1 ? "" : "s"} (
                     {pendentes} pendente{pendentes === 1 ? "" : "s"})
                   </td>
-                  <td className={`px-3.5 py-3 font-semibold ${DIAS_TONE_TEXT[PRIORITY_TONE[priority]]}`}>
-                    {formatDiasRestantes(dias)}
-                  </td>
+                  {priority === "unica_box" ? (
+                    <td className="px-3.5 py-3 text-muted">prazo especial</td>
+                  ) : (
+                    <td className={`px-3.5 py-3 font-semibold ${DIAS_TONE_TEXT[PRIORITY_TONE[priority]]}`}>
+                      {formatDiasRestantes(dias)}
+                    </td>
+                  )}
                   <td className="px-3.5 py-3">
-                    <PriorityBadge priority={priority} />
+                    {priority === "unica_box" ? <UnicaBoxBadge /> : <PriorityBadge priority={priority} />}
                   </td>
                 </tr>
               );

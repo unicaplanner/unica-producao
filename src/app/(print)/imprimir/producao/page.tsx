@@ -47,17 +47,24 @@ export default async function ImprimirProducaoPage({
             <ul>
               {g.pedidos.map((p) => {
                 const texto = formatCustomAttributes(p.customAttributes);
-                const atrasado = getPriority(p.prazoLimite, hoje) === "atrasado";
+                const atrasado = !p.unicaBox && getPriority(p.prazoLimite, hoje) === "atrasado";
                 return (
                   <li key={p.lineItemId} className="flex items-start py-[0.6mm] break-inside-avoid">
                     <PrintCheckbox />
                     <span>
                       <b>{p.orderName}</b>
-                      {p.clienteNome && <> · {p.clienteNome}</>} · {p.quantity}× · prazo{" "}
-                      {p.prazoLimite.toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                      })}
+                      {p.clienteNome && <> · {p.clienteNome}</>} · {p.quantity}×
+                      {p.unicaBox ? (
+                        <b> · UNICA BOX</b>
+                      ) : (
+                        <>
+                          {" · prazo "}
+                          {p.prazoLimite.toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                          })}
+                        </>
+                      )}
                       {atrasado && <b> · ATRASADO</b>}
                       {texto && <span className="italic"> — {texto}</span>}
                     </span>

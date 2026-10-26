@@ -5,6 +5,8 @@ import { PriorityBadge } from "@/components/PriorityBadge";
 import { OrderSelectBox, OrderSelectionProvider, SelectAllBox } from "@/components/OrderSelection";
 import { KitBadge } from "@/components/KitBadge";
 import { isKitOnlyOrder, kitsFirst } from "@/lib/kits";
+import { UnicaBoxBadge } from "@/components/UnicaBoxBadge";
+import { isUnicaBoxOrder } from "@/lib/unicaBox";
 import { StatCard } from "@/components/StatCard";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +16,10 @@ export default async function DashboardPage() {
   const now = new Date();
 
   const buckets = new Map(PRIORITY_ORDER.map((p) => [p, [] as typeof orders]));
+  // Unica Box (assinatura paga antecipada, prazo especial) fica fora da conta de atraso.
+  const unicaBox = orders.filter((o) => isUnicaBoxOrder(o.lineItems));
   for (const order of orders) {
+    if (isUnicaBoxOrder(order.lineItems)) continue;
     buckets.get(getPriority(order.prazoLimite, now))!.push(order);
   }
 
@@ -48,13 +53,13 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {PRIORITY_ORDER.map((priority) => {
-        const list = kitsFirst(buckets.get(priority)!);
+      {[...PRIORITY_ORDER, "unica_box" as const].map((priority) => {
+        const list = priority === "unica_box" ? unicaBox : kitsFirst(buckets.get(priority)!);
         if (list.length === 0) return null;
         return (
           <section key={priority}>
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-ink">
-              <PriorityBadge priority={priority} />
+              {priority === "unica_box" ? <UnicaBoxBadge /> : <PriorityBadge priority={priority} />}
               <span className="font-normal text-muted">({list.length})</span>
               <span className="ml-auto">
                 <SelectAllBox ids={list.map((o) => o.id)} label="Selecionar todos" />
@@ -79,10 +84,13 @@ export default async function DashboardPage() {
                           <p className="flex items-center gap-2 font-semibold text-ink">
                             {order.name}
                             {isKitOnlyOrder(order.lineItems) && <KitBadge />}
+                            {isUnicaBoxOrder(order.lineItems) && <UnicaBoxBadge />}
                           </p>
                           <p className="text-sm text-muted">
-                            Pedido em {order.orderDate.toLocaleDateString("pt-BR")} · prazo{" "}
-                            {order.prazoLimite.toLocaleDateString("pt-BR")}
+                            Pedido em {order.orderDate.toLocaleDateString("pt-BR")}
+                            {isUnicaBoxOrder(order.lineItems)
+                              ? " · prazo especial (assinatura)"
+                              : ` · prazo ${order.prazoLimite.toLocaleDateString("pt-BR")}`}
                           </p>
                         </div>
                         <span className="whitespace-nowrap text-sm text-muted">

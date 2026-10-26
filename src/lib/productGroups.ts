@@ -18,6 +18,7 @@ export interface ProductGroup {
     orderId: string;
     orderName: string;
     orderDate: Date;
+    unicaBox: boolean;
     clienteNome: string | null;
     prazoLimite: Date;
     quantity: number;

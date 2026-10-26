@@ -14,6 +14,8 @@ import { LineItemCheckbox } from "@/components/LineItemCheckbox";
 import { LineItemPrintFile } from "@/components/LineItemPrintFile";
 import { KitBadge } from "@/components/KitBadge";
 import { isKitOnlyOrder } from "@/lib/kits";
+import { UnicaBoxBadge } from "@/components/UnicaBoxBadge";
+import { isUnicaBoxOrder } from "@/lib/unicaBox";
 import { CustomerName } from "@/components/CustomerName";
 import { BoxChecklist } from "@/components/BoxChecklist";
 import { SameCustomerSuggestion } from "@/components/SameCustomerSuggestion";
@@ -49,7 +51,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           </div>
           <div className="flex items-center gap-2">
             {isKitOnlyOrder(order.lineItems) && <KitBadge />}
-            <PriorityBadge priority={priority} />
+            {isUnicaBoxOrder(order.lineItems) ? <UnicaBoxBadge /> : <PriorityBadge priority={priority} />}
           </div>
         </div>
 
@@ -60,7 +62,11 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           </div>
           <div>
             <dt className="text-muted">Prazo limite</dt>
-            <dd className="text-ink">{order.prazoLimite.toLocaleDateString("pt-BR")}</dd>
+            <dd className="text-ink">
+              {isUnicaBoxOrder(order.lineItems)
+                ? "Especial (assinatura)"
+                : order.prazoLimite.toLocaleDateString("pt-BR")}
+            </dd>
           </div>
           <div>
             <dt className="text-muted">Pagamento</dt>
