@@ -1,6 +1,9 @@
 import Link from "next/link";
-import { getOpenOrders } from "@/lib/queries";
-import { getPriority, PRIORITY_ORDER } from "@/lib/priority";
+import { getCustomerNames, getOpenOrders } from "@/lib/queries";
+import { formatDiasRestantes, getDiasRestantes, getPriority, PRIORITY_ORDER } from "@/lib/priority";
+import { formatCustomAttributes, type CustomAttribute } from "@/lib/productGroups";
+import { PainelLista, type ListaSecao } from "@/components/PainelLista";
+import { ViewToggle } from "@/components/ViewToggle";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { OrderSelectBox, OrderSelectionProvider, SelectAllBox } from "@/components/OrderSelection";
 import { KitBadge } from "@/components/KitBadge";
@@ -11,8 +14,15 @@ import { StatCard } from "@/components/StatCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vista?: string }>;
+}) {
+  const { vista: vistaParam } = await searchParams;
+  const vista = vistaParam === "lista" ? "lista" : "cartoes";
   const orders = await getOpenOrders();
+  const nomes = await getCustomerNames(orders.map((o) => o.customerId));
   const now = new Date();
 
   const buckets = new Map(PRIORITY_ORDER.map((p) => [p, [] as typeof orders]));
@@ -27,6 +37,41 @@ export default async function DashboardPage() {
     (sum, o) => sum + o.lineItems.filter((li) => li.statusProducao === "pendente").length,
     0
   );
+
+  // Mesmas seções do painel (Atrasado, Sai hoje... e Unica Box no fim), no
+  // formato que a visão em lista precisa (dados simples, itens de cada pedido).
+  const secoesLista: ListaSecao[] = [...PRIORITY_ORDER, "unica_box" as const]
+    .map((priority) => ({
+      key: priority,
+      priority: priority === "unica_box" ? null : priority,
+      lista: priority === "unica_box" ? unicaBox : kitsFirst(buckets.get(priority)!),
+    }))
+    .filter((s) => s.lista.length > 0)
+    .map((s) => ({
+      key: s.key,
+      priority: s.priority,
+      pedidos: s.lista.map((order) => {
+        const unica = isUnicaBoxOrder(order.lineItems);
+        return {
+          id: order.id,
+          name: order.name,
+          clienteNome: (order.customerId && nomes[order.customerId]) || null,
+          prazo: unica ? null : order.prazoLimite.toLocaleDateString("pt-BR"),
+          diasLabel: unica ? null : formatDiasRestantes(getDiasRestantes(order.prazoLimite, now)),
+          priority: unica ? null : getPriority(order.prazoLimite, now),
+          isKit: isKitOnlyOrder(order.lineItems),
+          isUnicaBox: unica,
+          items: order.lineItems.map((li) => ({
+            id: li.id,
+            title: li.title,
+            variantTitle: li.variantTitle,
+            quantity: li.quantity,
+            texto: formatCustomAttributes((li.customAttributes as CustomAttribute[] | null) ?? []),
+            produzido: li.statusProducao === "produzido",
+          })),
+        };
+      }),
+    }));
 
   if (orders.length === 0) {
     return (
@@ -53,7 +98,16 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {[...PRIORITY_ORDER, "unica_box" as const].map((priority) => {
+      {vista === "lista" ? (
+        <PainelLista
+          leading={<ViewToggle vista="lista" />}
+          secoes={secoesLista}
+        />
+      ) : (
+        <ViewToggle vista="cartoes" />
+      )}
+
+      {vista === "cartoes" && [...PRIORITY_ORDER, "unica_box" as const].map((priority) => {
         const list = priority === "unica_box" ? unicaBox : kitsFirst(buckets.get(priority)!);
         if (list.length === 0) return null;
         return (
